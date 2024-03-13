@@ -8,27 +8,24 @@ screen = pg.display.set_mode((1,1))
 def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager):
     frames = []
     i = 0 
-    spriteImage = Image.open(image)
-    temp = image
-    for y in range(spriteImage.height // imageHeight):
-      for x in range(spriteImage.width // imageWidth):
-          temp = image
+    spriteImage = pg.image.load(image).convert_alpha()
+    tempRect = spriteImage.get_rect()
+    for y in range(tempRect.height // imageHeight):
+      for x in range(tempRect.width // imageWidth):
           i += 1
           if i > numFrames:
-              y = (spriteImage.height // imageHeight) + 1
-              x = (spriteImage.width // imageWidth) + 1
+              y = (tempRect.height // imageHeight) + 1
+              x = (tempRect.width // imageWidth) + 1
               break
-
-          spriteImage = spriteImage.crop((x * imageWidth, y * imageHeight, x * imageWidth + imageWidth, y * imageHeight + imageHeight))
-          temp = temp.replace(".png", str(i) + ".png")
-          spriteImage.resize((int(gameManager.tileSize), int(gameManager.tileSize))).save(temp)
-          frames.append(temp)
-          spriteImage = Image.open(image)
+          frame = spriteImage.subsurface((x * imageWidth, y * imageHeight, imageWidth, imageHeight))
+          frame = pg.transform.scale(frame, (gameManager.tileSize[0], gameManager.tileSize[1]))
+          frames.append(frame)
     return frames
+
 
 class GameManager:  ########## Game manager #########
 
-  def __init__(self, WIDTH, HEIGHT, FPS, tileSize):
+  def __init__(self, FPS):
     self.Player = Player
     self.wall_group = pg.sprite.Group()
     self.box_group = pg.sprite.Group()
@@ -36,6 +33,7 @@ class GameManager:  ########## Game manager #########
     self.shadow_group = pg.sprite.Group()
     self.door_group = pg.sprite.Group()
     self.guard_group = pg.sprite.Group()
+    self.enemy_group = pg.sprite.Group()
     self.collect_group = pg.sprite.Group()
     self.text_group = pg.sprite.Group()
     self.switch_group = pg.sprite.Group()
@@ -43,12 +41,16 @@ class GameManager:  ########## Game manager #########
     self.kill_shadow = pg.sprite.Group()
     self.inventory = pg.sprite.Group()
 
-    self.screenWidth = WIDTH
-    self.screenHeight = HEIGHT
-    self.tileSize = int(tileSize)
+    width, height = pg.display.get_desktop_sizes()[0]
+    width = round(width / 22) * 22
+    self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
+    #self.screen = pg.display.set_mode((width, width * 9/16))
+    self.screenWidth = self.screen.get_width()
+    self.screenHeight = self.screen.get_height()
+    self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
     self.FPS = FPS
 
-    self.sceneIndex = 0
+    self.sceneIndex = [0, [0, 0]]
 
   def clearLevel(self):
     self.wall_group.empty()
@@ -57,6 +59,7 @@ class GameManager:  ########## Game manager #########
     self.shadow_group.empty()
     self.door_group.empty()
     self.guard_group.empty()
+    self.enemy_group.empty()
     self.collect_group.empty()
     self.text_group.empty()
     self.switch_group.empty()
@@ -76,13 +79,6 @@ class GameManager:  ########## Game manager #########
         self.inventory.remove(collectable)
 
   def checkCollisions(self):
-    collided_enemies = pg.sprite.spritecollide(self.Player, self.guard_group,
-                                               False)
-    collided_killShadow = pg.sprite.spritecollide(self.Player,
-                                                  self.kill_shadow, False)
-    if len(collided_enemies) > 0 or (len(collided_killShadow) > 0
-                                     and self.Player.PShadow):
-      self.Player.killed()
 
     collided_switchWalls = pg.sprite.spritecollide(self.Player,
                                                    self.switchWall_group,
@@ -90,21 +86,12 @@ class GameManager:  ########## Game manager #########
 
     for switchWall in collided_switchWalls:
       if switchWall.on:
-        self.Player.rect.x = self.Player.preX
-        self.Player.rect.y = self.Player.preY
-        self.Player.windup = 1
+        self.Player.pos_float[0] = round(self.Player.preX)
+        self.Player.pos_float[1] = round(self.Player.preY)
+        self.Player.rect.x = round(self.Player.pos_float[0])
+        self.Player.rect.y = round(self.Player.pos_float[1])
+        self.Player.windup = 0
 
-    if self.Player.PShadow:  # player * shadow collision
-      collided_shadows = pg.sprite.spritecollide(self.Player,
-                                                 self.shadow_group, False)
-      if len(collided_shadows) > 0:
-        for shadow in collided_shadows:
-          self.Player.collidingshadow = True
-          self.Player.rect.x = self.Player.preX
-          self.Player.rect.y = self.Player.preY
-          self.Player.windup = 1
-      else:
-        self.Player.collidingshadow = False
 
     collided_walls = pg.sprite.spritecollide(self.Player, self.wall_group,
                                              False)
@@ -112,7 +99,7 @@ class GameManager:  ########## Game manager #########
                                              False)
     if len(collided_walls) > 0 or len(collided_boxes) > 0:
       self.Player.collidingreal = True
-    elif len(collided_switchWalls) > 0:
+    elif len(collided_switchWalls) > 0: # player * wall
       for wall in collided_switchWalls:
         if wall.on:
           self.Player.collidingreal = True
@@ -123,16 +110,18 @@ class GameManager:  ########## Game manager #########
 
     for wall in collided_walls:
       if self.Player.PShadow == wall.shadow or not (self.Player.PShadow):
-        self.Player.rect.x = self.Player.preX
-        self.Player.rect.y = self.Player.preY
-        self.Player.windup = 1
+        self.Player.pos_float[0] = round(self.Player.preX)
+        self.Player.pos_float[1] = round(self.Player.preY)
+        self.Player.rect.x = round(self.Player.pos_float[0])
+        self.Player.rect.y = round(self.Player.pos_float[1])
+        self.Player.windup = 0
 
     for box in collided_boxes:
       if self.Player.PShadow == box.shadow or not (self.Player.PShadow):
-        box.preX = box.rect.x  # moving a held box
-        box.preY = box.rect.y
-        box.rect.x += self.Player.rect.x - self.Player.preX
-        box.rect.y += self.Player.rect.y - self.Player.preY
+        box.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
+        box.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
 
         self.colliding_box_group.add(box)
         self.box_group.remove(box)
@@ -142,10 +131,10 @@ class GameManager:  ########## Game manager #########
       for box1 in self.colliding_box_group:
         box_box = pg.sprite.spritecollide(box1, self.box_group, False)
         for box2 in box_box:
-          box2.preX = box2.rect.x  # moving a held box
-          box2.preY = box2.rect.y
-          box2.rect.x += self.Player.rect.x - self.Player.preX
-          box2.rect.y += self.Player.rect.y - self.Player.preY
+          box2.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
+          box2.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
+          box2.rect.x = round(box2.pos_float[0])
+          box2.rect.y = round(box2.pos_float[1])
 
           self.colliding_box_group.add(box2)
           self.box_group.remove(box2)
@@ -159,11 +148,30 @@ class GameManager:  ########## Game manager #########
                                                 False)  # box * wall collision
     if len(box_wall_col_group) > 0:
       for box in self.colliding_box_group:
-        box.rect.x = box.preX
-        box.rect.y = box.preY
-      self.Player.rect.x = self.Player.preX
-      self.Player.rect.y = self.Player.preY
-      self.Player.windup = 1
+        box.pos_float[0] = round(box.preX) # moving a box
+        box.pos_float[1] = round(box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+      self.Player.pos_float[0] = round(self.Player.preX)
+      self.Player.pos_float[1] = round(self.Player.preY)
+      self.Player.rect.x = round(self.Player.pos_float[0])
+      self.Player.rect.y = round(self.Player.pos_float[1])
+      self.Player.windup = 0
+
+    box_door_col_group = pg.sprite.groupcollide(self.colliding_box_group,
+      self.door_group, False,
+      False)  # box * door collision
+    if len(box_door_col_group) > 0:
+      for box in self.colliding_box_group:
+        box.pos_float[0] = round(box.preX) # moving a box
+        box.pos_float[1] = round(box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        self.Player.pos_float[0] = round(self.Player.preX)
+        self.Player.pos_float[1] = round(self.Player.preY)
+        self.Player.rect.x = round(self.Player.pos_float[0])
+        self.Player.rect.y = round(self.Player.pos_float[1])
+        self.Player.windup = 0
 
 
     box_switchWall_col_group = pg.sprite.groupcollide(self.colliding_box_group,
@@ -171,18 +179,26 @@ class GameManager:  ########## Game manager #########
                                                       False, False) # box * switchWall collision
     for box, switchWall in box_switchWall_col_group.items():
       if switchWall[0].on:
-        box.rect.x = box.preX
-        box.rect.y = box.preY
-        self.Player.rect.x = self.Player.preX
-        self.Player.rect.y = self.Player.preY
-        self.Player.windup = 1
+        box.pos_float[0] = round(box.preX)
+        box.pos_float[1] = round(box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        self.Player.pos_float[0] = round(self.Player.preX)
+        self.Player.pos_float[1] = round(self.Player.preY)
+        self.Player.rect.x = round(self.Player.pos_float[0])
+        self.Player.rect.y = round(self.Player.pos_float[1])
+        self.Player.windup = 0
 
     for box in self.colliding_box_group:
       if box.rect.x < 0 or box.rect.x + box.rect.width > self.screenWidth or box.rect.y < 0 or box.rect.y + box.rect.height > self.screenHeight:
-        box.rect.x = box.preX
-        box.rect.y = box.preY
-        self.Player.rect.x = self.Player.preX
-        self.Player.rect.y = self.Player.preY
+        box.pos_float[0] = round(box.preX)
+        box.pos_float[1] = round(box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        self.Player.pos_float[0] = round(self.Player.preX)
+        self.Player.pos_float[1] = round(self.Player.preY)
+        self.Player.rect.x = round(self.Player.pos_float[0])
+        self.Player.rect.y = round(self.Player.pos_float[1])
 
       self.box_group.add(box)
       self.colliding_box_group.remove(box)
@@ -194,9 +210,11 @@ class GameManager:  ########## Game manager #########
       door.isOpen = False
     for door in collided_doors:
       door.isOpen = True
-      self.Player.rect.x = self.Player.preX
-      self.Player.rect.y = self.Player.preY
-      self.Player.windup = 1
+      self.Player.pos_float[0] = round(self.Player.preX)
+      self.Player.pos_float[1] = round(self.Player.preY)
+      self.Player.rect.x = round(self.Player.pos_float[0])
+      self.Player.rect.y = round(self.Player.pos_float[1])
+      self.Player.windup = 0
       break
 
 
@@ -222,6 +240,38 @@ class GameManager:  ########## Game manager #########
       if switch not in collided_switch and switch.playerColliding == True:
         switch.playerColliding = False
 
+    for guard in self.guard_group:
+      guard_box = pg.sprite.spritecollide(guard, self.box_group, False) # guard * box
+      if len(guard_box) > 0:
+        if not(guard.pos_float[0] == guard.preX or guard.pos_float[0] == guard.preY):
+          guard.pos_float[0] = guard.preX
+          guard.pos_float[1] = guard.preY
+          guard.rect.x = round(guard.pos_float[0])
+          guard.rect.y = round(guard.pos_float[1])
+          guard.turnSelf()
+      else:
+        guard_wall = pg.sprite.spritecollide(guard, self.wall_group, False)
+        if len(guard_wall) > 0:
+          guard.turn = not(guard.turn)
+          guard.pos_float[0] = guard.preX
+          guard.pos_float[1] = guard.preY
+          guard.rect.x = round(guard.pos_float[0])
+          guard.rect.y = round(guard.pos_float[1])
+          guard.turnSelf()
+
+    collided_enemies = pg.sprite.spritecollide(self.Player, self.enemy_group,
+                                               False)
+    collided_killShadow = pg.sprite.spritecollide(self.Player,
+                                                  self.kill_shadow, False)
+    if len(collided_enemies) > 0 or (len(collided_killShadow) > 0
+                                     and self.Player.PShadow):
+      self.Player.killed()
+
+    for guard in self.guard_group:
+      guard_box = pg.sprite.spritecollide(guard, self.box_group, False)
+      if len(guard_box) > 0:
+        guard.vision.kill()
+        guard.kill()
 
     collided_collect = pg.sprite.spritecollide(self.Player, self.collect_group,
                                                False)
@@ -240,28 +290,21 @@ class Sprite(pg.sprite.Sprite):  ######### sprite #########
 
   def __init__(self,
                image,
-               startx,
-               starty,
+               pos,
                manager,
-               text=False,
                grid=True,
                *groups):
     super().__init__(*groups)
 
-    mentorImage = Image.open("sprites/NPCs/Mentor.png").crop((100, 80, 332, 590))
-    mentorImage.resize((int(manager.tileSize), int(manager.tileSize) * 2)).save("sprites/NPCs/NMentor.png")
 
-    if text:
-      self.image = image
-    else:
-      self.image = pg.image.load(image).convert_alpha()
-    self.rect = self.image.get_rect()
+    self.image = image
+    self.rect = image.get_rect()
 
     if grid:
-      self.rect.x = (startx + .5) * manager.tileSize - self.rect.width / 2
-      self.rect.y = (starty + .5) * manager.tileSize - self.rect.height / 2
+      self.rect.x = (pos[0] + .5) * manager.tileSize[0] - self.rect.width / 2
+      self.rect.y = (pos[1] + .5) * manager.tileSize[1] - self.rect.height / 2
     else:
-      self.rect.center = (startx, starty)
+      self.rect.center = (pos[0], pos[1])
 
   def update(self):
     pass
@@ -280,14 +323,13 @@ class Collider(Sprite):  ########## collider #############
 
   def __init__(self,
                image,
-               startx,
-               starty,
+               pos,
                manager,
-               shadow=False,
-               textImage=False,
+               shadow=False, 
+               grid=True,
                *groups):
     self.shadow = shadow
-    super().__init__(image, startx, starty, manager, textImage, *groups)
+    super().__init__(image, pos, manager, grid, *groups)
 
   def addSelf(self, manager):
     if (self.shadow):
@@ -296,26 +338,24 @@ class Collider(Sprite):  ########## collider #############
 
 class Collectable(Collider):  ####### Collectable #########
 
-  def __init__(self, startx, starty, type, name, manager, *groups):
+  def __init__(self, pos, type, name, manager, *groups):
     if type == "key":
-        keyImage = Image.open("sprites/Collectibles/key.png")
-        keyImage.resize(
-            (int(manager.tileSize),
-             int(manager.tileSize))).save("sprites/Collectibles/newKey.png")
-        image = "sprites/Collectibles/newKey.png"
-        self.frames = ["sprites/Collectibles/newKey.png"]
+        image = pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1]))
+        self.frames = [image]
     elif type == "coin":
         self.frames = spriteSheet("sprites/Collectibles/coin.png", 32, 32, 10, manager)
         image = self.frames[0]
     else:
-      image = "sprites/Collectibles/newKey.png"
+        image = pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],
+            manager.tileSize[1]))
+        self.frames = [image]
 
     self.clock = 0
     self.globalFPS = manager.FPS
 
     self.inInventor = False
     self.name = name
-    super().__init__(image, startx, starty, manager, *groups)
+    super().__init__(image, pos, manager, *groups)
     self.manager = manager
 
   def collected(self):
@@ -341,59 +381,43 @@ class Collectable(Collider):  ####### Collectable #########
       self.clock = 0
     self.clock += 1
 
-    self.image = pg.image.load(self.frames[int(
-        (self.clock / numFrames)) % len(self.frames)]).convert_alpha()
-    super().animate()
+    self.image = self.frames[round((self.clock / numFrames)) % len(self.frames)]
 
 
 class Player(Collider):  ############ player ##############
 
-  def __init__(self, startx, starty, manager, *groups):
-    playerImage = Image.open("sprites/Player/Player.jpeg")
-    playerImage.resize(
-        (manager.tileSize * 4 // 5,
-         manager.tileSize * 4 // 5)).save("sprites/Player/SPlayer.png")
-    playerImage = Image.open("sprites/Player/SPlayer.png")
-    playerImage.rotate(180, expand=True).save("sprites/Player/NPlayer.png")
-    playerImage = Image.open("sprites/Player/SPlayer.png")
-    playerImage.rotate(-90, expand=True).save("sprites/Player/WPlayer.png")
-    playerImage = Image.open("sprites/Player/SPlayer.png")
-    playerImage.rotate(90, expand=True).save("sprites/Player/EPlayer.png")
+  def __init__(self, pos, manager, *groups):
+    playerImage = pg.transform.scale(pg.image.load("sprites/Player/Player.jpeg").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
-    shadowImage = Image.open("sprites/Player/SPlayer.png")
+    shadowImage = Image.open("sprites/Player/Player.jpeg")
     shadowImage = shadowImage.filter(FIND_EDGES)
     shadowImage.putalpha(128)
     shadowImage.save("sprites/Player/SPShadow.png")
-    shadowImage = Image.open("sprites/Player/SPShadow.png")
-    shadowImage.rotate(180, expand=True).save("sprites/Player/NPShadow.png")
-    shadowImage = Image.open("sprites/Player/SPShadow.png")
-    shadowImage.rotate(90, expand=True).save("sprites/Player/EPShadow.png")
-    shadowImage = Image.open("sprites/Player/SPShadow.png")
-    shadowImage.rotate(-90, expand=True).save("sprites/Player/WPShadow.png")
+    shadowPlayerImage = pg.transform.scale(pg.image.load("sprites/Player/SPShadow.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
-    self.preX = startx
-    self.preY = starty
+    self.preX = pos[0]
+    self.preY = pos[1]
+    self.pos_float = [pos[0], pos[1]]
 
-    super().__init__("sprites/Player/SPlayer.png", startx, starty, manager,
+    super().__init__(playerImage, pos, manager,
                      *groups)
     self.collidingreal = False
-    self.collidingshadow = False
     self.PShadow = False
     self.alive = True
 
-    self.direction = "S"
+    self.direction = "E"
     self.clock = 0
     self.globalFPS = manager.FPS
 
     # animation lists
-    self.walkN = ["sprites/Player/NPlayer.png"]
-    self.walkE = ["sprites/Player/EPlayer.png"]
-    self.walkS = ["sprites/Player/SPlayer.png"]
-    self.walkW = ["sprites/Player/WPlayer.png"]
-    self.SWalkN = ["sprites/Player/NPShadow.png"]
-    self.SWalkE = ["sprites/Player/EPShadow.png"]
-    self.SWalkS = ["sprites/Player/SPShadow.png"]
-    self.SWalkW = ["sprites/Player/WPShadow.png"]
+    self.walkN = [pg.transform.rotate(playerImage, 180)]
+    self.walkE = [pg.transform.rotate(playerImage, 90)]
+    self.walkS = [playerImage]
+    self.walkW = [pg.transform.rotate(playerImage, -90)]
+    self.SWalkN = [pg.transform.rotate(shadowPlayerImage, 180)]
+    self.SWalkE = [pg.transform.rotate(shadowPlayerImage, 90)]
+    self.SWalkS = [shadowPlayerImage]
+    self.SWalkW = [pg.transform.rotate(shadowPlayerImage, -90)]
 
     self.frames = self.walkS
 
@@ -404,8 +428,8 @@ class Player(Collider):  ############ player ##############
     self.manager = manager
 
   def update(self):
-    self.preX = self.rect.x
-    self.preY = self.rect.y
+    self.preX = self.pos_float[0]
+    self.preY = self.pos_float[1]
     keys = pg.key.get_pressed()
 
     if not (keys[pg.K_w]) and not (keys[pg.K_a]) and not (
@@ -415,30 +439,30 @@ class Player(Collider):  ############ player ##############
     if self.cooldown <= 0:
       if keys[pg.K_a]:
         self.direction = "W"
-        self.move(-self.manager.tileSize, 0)
+        self.move(-1, 0)
         self.cooldown = self.manager.FPS
       elif keys[pg.K_d]:
         self.direction = "E"
-        self.move(self.manager.tileSize, 0)
+        self.move(1, 0)
         self.cooldown = self.manager.FPS
       elif keys[pg.K_w]:
         self.direction = "N"
-        self.move(0, -self.manager.tileSize)
+        self.move(0, -1)
         self.cooldown = self.manager.FPS
       elif keys[pg.K_s]:
         self.direction = "S"
-        self.move(0, self.manager.tileSize)
+        self.move(0, 1)
         self.cooldown = self.manager.FPS
 
       if self.preX == self.rect.x and self.preY == self.rect.y:
-        self.windup = 1
+        self.windup = 0
     else:
       self.cooldown -= self.windup
-      self.windup += 2
-      if self.windup > self.manager.FPS / 4:
-        self.windup = self.manager.FPS / 4
+      self.windup += 1
+      if self.windup > self.manager.FPS / 8:
+        self.windup = self.manager.FPS / 8
 
-    if keys[pg.K_LSHIFT] and not (self.collidingshadow):
+    if keys[pg.K_LSHIFT]:
       self.PShadow = True
     elif keys[pg.K_LSHIFT] is False and not (self.collidingreal):
       self.PShadow = False
@@ -462,8 +486,13 @@ class Player(Collider):  ############ player ##############
       elif self.direction == "W":
         self.frames = self.walkW
 
+    self.rect.x = round(self.pos_float[0])
+    self.rect.y = round(self.pos_float[1])
+
   def move(self, x, y):
-    self.rect.move_ip([x, y])
+    self.pos_float[0] += x * self.manager.tileSize[0]
+    self.pos_float[1] += y * self.manager.tileSize[1]
+
 
   def killed(self):
     self.alive = False
@@ -476,137 +505,232 @@ class Player(Collider):  ############ player ##############
       self.clock = 0
     self.clock += 1
 
-    self.image = pg.image.load(self.frames[int(
-        (self.clock / numFrames)) % len(self.frames)]).convert_alpha()
+    self.image = self.frames[round((self.clock / numFrames)) % len(self.frames)]
     super().animate()
+
+  def setPos(self, x, y):
+    if x is not None:
+        self.rect.x = (x + .5) * self.manager.tileSize[0] - self.rect.width / 2
+        self.pos_float[0] = (x + .5) * self.manager.tileSize[0] - self.rect.width / 2
+    if y is not None:
+        self.rect.y = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
+        self.pos_float[1] = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
 
 
 class text(Collider):  ################ text ###############
 
-  def __init__(self, startx, starty, manager, text, rectColor=(0,255,255), textColor=(0,0,0), textSize=16, font='freesansbold.ttf', *groups):
-    
-    font = pg.font.Font(font, textSize)
+  def __init__(self, pos, width, text, manager, textSize=16, textColor=(0,0,0), font='freesansbold.ttf', *groups):
 
-    self.text = font.render(text, True, textColor)
+    self.manager = manager
+    image = pg.transform.scale(pg.image.load("sprites/Misc/textBubble.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    self.font = pg.font.Font(font, round(textSize * manager.tileSize[1]))
+
+    self.words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
+    self.textColor = textColor
+
     self.colliding = False
 
-    self.rectColor = rectColor
-    
-    super().__init__(self.text, startx, starty, manager, False, True, *groups)
+    self.startx = ((pos[0] + .5) * manager.tileSize[0])
+    self.starty = ((pos[1] + .5) * manager.tileSize[1])
+
+    self.textBoxWdith = width
+
+    super().__init__(image, pos, manager, True, *groups)
 
   def draw(self, screen):
 
     if self.colliding:
-      screen.blit(self.text, self.rect)
+      x, y = (self.startx, self.starty)
+      maxX = x
+      posArray = []
+      space = self.font.size(' ')[0]  # The width of a space
+      for line in self.words:
+          for word in line:
+              word_surface = self.font.render(word, 0, self.textColor)
+              word_width, word_height = self.font.size(word)
+              if x + word_width >= self.textBoxWdith:
+                  x = self.startx  # Reset the x.
+                  y += word_height  # Start on new row.
+              posArray.append((x, y))
+              x += word_width + space
+              if x > maxX:
+                maxX = x
+          x = self.startx  # Reset the x.
+          y += word_height
+      maxX = maxX - self.startx
+      height = y - self.starty
+
+
+      s = pg.Surface((maxX, height), pg.SRCALPHA)
+      pg.draw.rect(s, (255, 255, 255, 128), (s.get_rect()))
+      screen.blit(s, (self.startx - (maxX / 2), self.starty - (height / 2), maxX, height))
+
+      i = 0
+      for line in self.words:
+        for word in line:
+          word_surface = self.font.render(word, 0, self.textColor)
+          screen.blit(word_surface, (posArray[i][0] - (maxX / 2), posArray[i][1] - (height / 2)))
+          i += 1
+
+
     else:
-      pg.draw.rect(screen, self.rectColor, self.rect, 3)
+      screen.blit(self.image, self.rect)
 
   def addSelf(self, manager):
     manager.text_group.add(self)
 
 
+class Spike(Collider): ############### spike ###############
+
+  def __init__(self, pos, manager, grid=True, *groups):
+    image = pg.transform.scale(pg.image.load("sprites/Enemies/spike.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+
+    super().__init__(image, pos, manager, grid, *groups)
+
+  def addSelf(self, manager):
+    manager.enemy_group.add(self)
+
+
+class visionCone(Collider): ############### guardVision ########
+
+  def __init__(self, guard):
+    image = pg.transform.scale(pg.image.load("sprites/Enemies/visionCone.png").convert_alpha(), (guard.manager.tileSize[0] * 2, guard.manager.tileSize[1] * 3))
+
+    self.preX = guard.pos_float[0]
+    self.preY = guard.pos_float[1]
+
+    super().__init__(image, (round(guard.pos_float[0]), round(guard.pos_float[1])), guard.manager , False, False)
+
+
 class Guard(Collider):  ############ guard ############
 
   def __init__(self,
-               startx,
-               starty,
+               pos,
                distance,
                speed,
                manager,
                hor=True,
                *groups):
-    guardImage = Image.open("sprites/Enemies/Guard.png")
-    guardImage.resize(
-        (int(manager.tileSize),
-         int(manager.tileSize))).save("sprites/Enemies/newGuardE.png")
-    guardImage = Image.open("sprites/Enemies/newGuardE.png")
-    guardImage.rotate(180, expand=True).save("sprites/Enemies/newGuardW.png")
-    guardImage = Image.open("sprites/Enemies/newGuardE.png")
-    guardImage.rotate(90, expand=True).save("sprites/Enemies/newGuardS.png")
-    guardImage = Image.open("sprites/Enemies/newGuardE.png")
-    guardImage.rotate(-90, expand=True).save("sprites/Enemies/newGuardN.png")
+    image = pg.transform.scale(pg.image.load("sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+
 
     if hor:
-      guardImage = "sprites/Enemies/newGuardE.png"
-      self.initial = startx * manager.tileSize
-      self.final = (startx + distance) * manager.tileSize
+      self.initial = pos[0] * manager.tileSize[0]
+      self.final = (pos[0] + distance) * manager.tileSize[0]
     else:
-      guardImage = "sprites/Enemies/newGuardS.png"
-      self.initial = starty * manager.tileSize
-      self.final = (starty + distance) * manager.tileSize
+      self.initial = pos[1] * manager.tileSize[1]
+      self.final = (pos[1] + distance) * manager.tileSize[1]
 
     self.hor = hor
     self.turn = False
 
+    self.preX = pos[0] * manager.tileSize[0]
+    self.preY = pos[1] * manager.tileSize[1]
+    self.pos_float = [pos[0]* manager.tileSize[0], pos[1] * manager.tileSize[1]]
+
     self.cooldown = 0
     self.windup = speed
 
-    super().__init__(guardImage, startx, starty, manager, *groups)
+    super().__init__(image, pos, manager, *groups)
+
     self.manager = manager
 
-  def update(self):
+    self.vision = visionCone(self)
 
+    if not(hor):
+      self.vision.image = pg.transform.rotate(self.vision.image, 90)
+      self.image = pg.transform.rotate(self.image, 90)
+
+
+  def update(self):
+    self.preX = self.pos_float[0]
+    self.preY = self.pos_float[1]
+    self.vision.preX = self.vision.rect.x
+    self.vision.preY = self.vision.rect.y
     if self.cooldown <= 0:
       if self.hor:
-        if not (self.turn):
+        if self.turn:
           if self.rect.x < self.final:
-            self.rect.x += self.manager.tileSize
+            self.pos_float[0] += self.manager.tileSize[0]
+            self.rect.x = self.pos_float[0]
+            self.vision.rect.midleft = self.rect.center
           else:
-            self.image = pg.image.load("sprites/Enemies/newGuardW.png").convert_alpha()
-            self.turn = True
+            self.turnSelf()
         else:
           if self.rect.x > self.initial:
-            self.rect.x -= self.manager.tileSize
+            self.pos_float[0] -= self.manager.tileSize[0]
+            self.rect.x = self.pos_float[0]
+            self.vision.rect.midright = self.rect.center
           else:
-            self.image = pg.image.load("sprites/Enemies/newGuardE.png").convert_alpha()
-            self.turn = False
+            self.turnSelf()
       else:
-        if not (self.turn):
+        if self.turn:
           if self.rect.y < self.final:
-            self.rect.y += self.manager.tileSize
+            self.pos_float[1] += self.manager.tileSize[1]
+            self.rect.y = self.pos_float[1]
+            self.vision.rect.midtop = self.rect.center
           else:
-            self.image = pg.image.load("sprites/Enemies/newGuardN.png").convert_alpha()
-            self.turn = True
+            self.turnSelf()
         else:
           if self.rect.y > self.initial:
-            self.rect.y -= self.manager.tileSize
+            self.pos_float[1] -= self.manager.tileSize[1]
+            self.rect.y = self.pos_float[1]
+            self.vision.rect.midbottom = self.rect.center
           else:
-            self.image = pg.image.load("sprites/Enemies/newGuardS.png").convert_alpha()
-            self.turn = False
-      self.cooldown = 60
+            self.turnSelf()
+      self.cooldown = self.manager.FPS
     else:
       self.cooldown -= self.windup
 
+  def turnSelf(self):
+    self.vision.image = pg.transform.rotate(self.vision.image, 180)
+    self.image = pg.transform.rotate(self.image, 180)
+    if self.hor:
+      if self.turn:
+        self.vision.rect = self.vision.image.get_rect(midright=self.rect.center)
+        self.turn = False
+      else:
+        self.vision.rect = self.vision.image.get_rect(midleft=self.rect.center)
+        self.turn = True
+    else:
+      if self.turn:
+        self.vision.rect = self.vision.image.get_rect(midbottom=self.rect.center)
+        self.turn = False
+      else:
+        self.vision.rect = self.vision.image.get_rect(midtop=self.rect.center)
+        self.turn = True
+
   def addSelf(self, manager):
     manager.guard_group.add(self)
+    manager.enemy_group.add(self)
+    manager.enemy_group.add(self.vision)
+
+  def draw(self, screen):
+    screen.blit(self.image, self.rect)
+    screen.blit(self.vision.image, self.vision.rect)
 
 
 class Box(Collider):  ############### box ################
 
-  def __init__(self, startx, starty, manager, shadow, *groups):
-    boxImage = Image.open("sprites/Boxes/box_moveable.png").crop(
-        (90, 100, 400, 410))
-    boxImage.resize(
-        (manager.tileSize * 4 // 5,
-         manager.tileSize * 4 // 5)).save("sprites/Boxes/NewBox.png")
-
-    boxImage = Image.open("sprites/Boxes/box_unmoveable.png").crop(
-        (90, 100, 400, 410))
-    boxImage.resize(
-        (manager.tileSize * 4 // 5,
-         manager.tileSize * 4 // 5)).save("sprites/Boxes/NewSBox.png")
-
-    if shadow:
-      image = "sprites/Boxes/NewSBox.png"
+  def __init__(self, pos, shadow, manager, *groups):
+    if not shadow:
+        boxImage = Image.open("sprites/Boxes/box_moveable.png").crop((90, 100, 400, 410)).save("sprites/Boxes/NewBox.png")
+        image = pg.transform.scale(pg.image.load("sprites/Boxes/NewBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     else:
-      image = "sprites/Boxes/NewBox.png"
+        boxImage = Image.open("sprites/Boxes/box_unmoveable.png").crop((90, 100, 400, 410)).save("sprites/Boxes/NewSBox.png")
+        image = pg.transform.scale(pg.image.load("sprites/Boxes/NewSBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
     self.shadow = shadow
 
-    super().__init__(image, startx, starty, manager, shadow, *groups)
+    super().__init__(image, pos, manager, shadow, *groups)
 
     self.preX = self.rect.x
     self.preY = self.rect.y
+    self.pos_float = [self.rect.x, self.rect.y]
+
+  def update(self):
+    self.preX = self.pos_float[0]
+    self.preY = self.pos_float[1]
 
   def addSelf(self, manager):
     manager.box_group.add(self)
@@ -616,41 +740,28 @@ class Box(Collider):  ############### box ################
 
 class Switch(Collider):  ############ switch #############
 
-  def __init__(self, startx, starty, manager, color, switchWalls, *groups):
-    offImage = Image.open("sprites/Switches/redSwitchOff.png")
-    offImage.thumbnail((manager.tileSize, manager.tileSize))
-    offImage.save("sprites/Switches/NRedSwitchOff.png")
+  def __init__(self, pos, color, switchWalls, manager, *groups):
+    redSwitchOff = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    redSwitchOn = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    offImage = Image.open("sprites/Switches/greenSwitchOff.png")
-    offImage.thumbnail((manager.tileSize, manager.tileSize))
-    offImage.save("sprites/Switches/NGreenSwitchOff.png")
+    blueSwitchOff = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    blueSwitchOn = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    offImage = Image.open("sprites/Switches/blueSwitchOff.png")
-    offImage.thumbnail((manager.tileSize, manager.tileSize))
-    offImage.save("sprites/Switches/NBlueSwitchOff.png")
+    greenSwitchOff = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    greenSwitchOn = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    onImage = Image.open("sprites/Switches/redSwitchOn.png")
-    onImage.thumbnail((manager.tileSize, manager.tileSize))
-    onImage.save("sprites/Switches/NRedSwitchOn.png")
-
-    onImage = Image.open("sprites/Switches/greenSwitchOn.png")
-    onImage.thumbnail((manager.tileSize, manager.tileSize))
-    onImage.save("sprites/Switches/NGreenSwitchOn.png")
-
-    onImage = Image.open("sprites/Switches/blueSwitchOn.png")
-    onImage.thumbnail((manager.tileSize, manager.tileSize))
-    onImage.save("sprites/Switches/NBlueSwitchOn.png")
+    self.frames = ((redSwitchOff, redSwitchOn), (blueSwitchOff, blueSwitchOn), (greenSwitchOff, greenSwitchOn))
 
     self.color = color
 
     if color == "red":
-      image = "sprites/Switches/NRedSwitchOff.png"
-    elif color == "green":
-      image = "sprites/Switches/NGreenSwitchOff.png"
+      image = self.frames[0][0]
+    elif color == "blue":
+      image = self.frames[1][0]
     else:
-      image = "sprites/Switches/NBlueSwitchOff.png"
+      image = self.frames[2][0]
 
-    super().__init__(image, startx, starty, manager, *groups)
+    super().__init__(image, pos, manager, *groups)
 
     self.switchWall_group = switchWalls
     self.playerColliding = False
@@ -661,20 +772,20 @@ class Switch(Collider):  ############ switch #############
     manager.switch_group.add(self)
 
   def update(self):
-    if self.on == True:
-      if self.color == "red":
-        self.image = pg.image.load("sprites/Switches/NRedSwitchOn.png").convert_alpha()
-      elif self.color == "green":
-        self.image = pg.image.load("sprites/Switches/NGreenSwitchOn.png").convert_alpha()
-      else:
-        self.image = pg.image.load("sprites/Switches/NBlueSwitchOn.png").convert_alpha()
+    if self.color == "red":
+      i = 0
+    elif self.color == "blue":
+      i = 1
     else:
-      if self.color == "red":
-        self.image = pg.image.load("sprites/Switches/NRedSwitchOff.png").convert_alpha()
-      elif self.color == "green":
-        self.image = pg.image.load("sprites/Switches/NGreenSwitchOff.png").convert_alpha()
-      else:
-        self.image = pg.image.load("sprites/Switches/NBlueSwitchOff.png").convert_alpha()
+      i = 2
+
+    if self.on == True:
+        j = 1
+    else:
+        j = 0
+
+    self.image = self.frames[i][j]
+
 
   def switchValues(self):
     self.on = not (self.on)
@@ -684,68 +795,49 @@ class Switch(Collider):  ############ switch #############
 
 class switchWall(Collider):  ############ switchWall ######
 
-  def __init__(self, startx, starty, manager, color, on=True, *groups):
-    offImage = Image.open("sprites/Switches/redSwitchWallOff.png")
-    offImage.thumbnail((manager.tileSize, manager.tileSize))
-    offImage.save("sprites/Switches/NRedSwitchWallOff.png")
+  def __init__(self, pos, color, on, manager, *groups):
+    redSwitchWallOff = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    redSwitchWallOn = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    offImage = Image.open("sprites/Switches/greenSwitchWallOff.png")
-    offImage.thumbnail((manager.tileSize, manager.tileSize))
-    offImage.save("sprites/Switches/NGreenSwitchWallOff.png")
+    blueSwitchWallOff = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    blueSwitchWallOn = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    offImage = Image.open("sprites/Switches/blueSwitchWallOff.png")
-    offImage.thumbnail((manager.tileSize, manager.tileSize))
-    offImage.save("sprites/Switches/NBlueSwitchWallOff.png")
+    greenSwitchWallOff = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    greenSwitchWallOn = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    onImage = Image.open("sprites/Switches/redSwitchWallOn.png")
-    onImage.thumbnail((manager.tileSize, manager.tileSize))
-    onImage.save("sprites/Switches/NRedSwitchWallOn.png")
+    self.frames = ((redSwitchWallOff, redSwitchWallOn), (blueSwitchWallOff, blueSwitchWallOn), (greenSwitchWallOff, greenSwitchWallOn))
 
-    onImage = Image.open("sprites/Switches/greenSwitchWallOn.png")
-    onImage.thumbnail((manager.tileSize, manager.tileSize))
-    onImage.save("sprites/Switches/NGreenSwitchWallOn.png")
+    self.color = color
 
-    onImage = Image.open("sprites/Switches/blueSwitchWallOn.png")
-    onImage.thumbnail((manager.tileSize, manager.tileSize))
-    onImage.save("sprites/Switches/NBlueSwitchWallOn.png")
+    if color == "red":
+      image = self.frames[0][0]
+    elif color == "blue":
+      image = self.frames[1][0]
+    else:
+      image = self.frames[2][0]
+
 
     self.on = on
     self.color = color
 
-    if on:
-      if color == "red":
-        image = "sprites/Switches/NRedSwitchWallOn.png"
-      elif color == "green":
-        image = "sprites/Switches/NGreenSwitchWallOn.png"
-      else:
-        image = "sprites/Switches/NBlueSwitchWallOn.png"
-    else:
-      if color == "red":
-        image = "sprites/Switches/NRedSwitchWallOff.png"
-      elif color == "green":
-        image = "sprites/Switches/NGreenSwitchWallOff.png"
-      else:
-        image = "sprites/Switches/NBlueSwitchWallOff.png"
-
     self.switched = on
 
-    super().__init__(image, startx, starty, manager, True)
+    super().__init__(image, pos, manager, True)
 
   def update(self):
-    if self.on == True:
-      if self.color == "red":
-        self.image = pg.image.load("sprites/Switches/NRedSwitchWallOn.png").convert_alpha()
-      elif self.color == "green":
-        self.image = pg.image.load("sprites/Switches/NGreenSwitchWallOn.png").convert_alpha()
-      else:
-        self.image = pg.image.load("sprites/Switches/NBlueSwitchWallOn.png").convert_alpha()
+    if self.color == "red":
+      i = 0
+    elif self.color == "blue":
+      i = 1
     else:
-      if self.color == "red":
-        self.image = pg.image.load("sprites/Switches/NRedSwitchWallOff.png").convert_alpha()
-      elif self.color == "green":
-        self.image = pg.image.load("sprites/Switches/NGreenSwitchWallOff.png").convert_alpha()
-      else:
-        self.image = pg.image.load("sprites/Switches/NBlueSwitchWallOff.png").convert_alpha()
+      i = 2
+
+    if self.on == True:
+        j = 1
+    else:
+        j = 0
+
+    self.image = self.frames[i][j]
 
   def addSelf(self, manager):
     manager.switchWall_group.add(self)
@@ -753,45 +845,35 @@ class switchWall(Collider):  ############ switchWall ######
 
 class Door(Collider):  ############# door ###########
 
-  def __init__(self, startx, starty, direction, returnIndex, item, manager,
+  def __init__(self, pos, direction, returnIndex, item, manager,
                *groups):
-    doorImage = Image.open("sprites/Doors/door.png")
-    doorImage.thumbnail((manager.tileSize, manager.tileSize * 2))
-    doorImage.save("sprites/Doors/NewDoorW.png")
-    doorImage = Image.open("sprites/Doors/NewDoorW.png")
-    doorImage.rotate(180, expand=True).save("sprites/Doors/NewDoorE.png")
-
-    if direction == "E":
-      image = "sprites/Doors/NewDoorE.png"
-    elif direction == "W":
-      image = "sprites/Doors/NewDoorW.png"
-    elif direction == "N":
-      image = "sprites/Doors/NewDoorN.png"
-    elif direction == "S":
-      image = "sprites/Doors/NewDoorS.png"
-    else:
-      image = "sprites/Doors/NewDoorE.png"
+    doorImage = pg.transform.scale(pg.image.load("sprites/Doors/door.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1] * 2))
 
     self.isOpen = False
     self.returnIndex = returnIndex
     self.item = item
 
-    super().__init__(image, startx, starty, manager, *groups)
+    super().__init__(doorImage, pos, manager, *groups)
 
     if direction == "E":
-      self.rect.x = startx * manager.tileSize
-      self.rect.y = starty * manager.tileSize
+      self.image = pg.transform.rotate(self.image, 180)
+      self.rect.x = pos[0] * manager.tileSize[0]
+      self.rect.y = pos[1] * manager.tileSize[1]
+      self.playerPos = (manager.screenWidth / manager.tileSize[0] - 1, None)
     elif direction == "W":
-      self.rect.x = (startx + 1) * manager.tileSize - self.rect.width
-      self.rect.y = starty * manager.tileSize
+      self.rect.right = (pos[0] + 1) * manager.tileSize[0]
+      self.rect.y = pos[1] * manager.tileSize[1]
+      self.playerPos = (1, None)
     elif direction == "N":
-      self.rect.x = startx * manager.tileSize
-      self.rect.y = (starty + 1) * manager.tileSize - self.rect.height
+      self.image = pg.transform.rotate(self.image, 90)
+      self.rect.x = pos[0] * manager.tileSize[0]
+      self.rect.bottom = (pos[1] + 1) * manager.tileSize[1]
+      self.playerPos = (None, 1)
     elif direction == "S":
-      self.rect.x = startx * manager.tileSize
-      self.rect.y = starty * manager.tileSize
-    else:
-      image = "sprites/Doors/NewDoorE.png"
+      self.image = pg.transform.rotate(self.image, -90)
+      self.rect.x = pos[0] * manager.tileSize[0]
+      self.rect.y = pos[1] * manager.tileSize[1]
+      self.playerPos = (manager.screenHeight / manager.tileSize[1] - 1, None)
 
   def addSelf(self, manager):
     manager.door_group.add(self)
@@ -804,14 +886,10 @@ class Door(Collider):  ############# door ###########
 
 class Button(Sprite):  ############# button ##################
 
-  def __init__(self, image, startx, starty, manager, grid=True, *groups):
+  def __init__(self, image, pos, manager, grid=True, *groups):
+    image = pg.transform.scale(pg.image.load(image).convert_alpha(), (manager.tileSize[0] * 8, manager.tileSize[1] * 4))
 
-    buttonImage = Image.open("sprites/Buttons/Button.png")
-    newImage = buttonImage.crop((50, 200, 550, 400))
-    newImage.thumbnail((manager.tileSize * 8, manager.tileSize * 8))
-    newImage.save("sprites/Buttons/NewButton.png")
-
-    super().__init__(image, startx, starty, manager, False, grid, *groups)
+    super().__init__(image, pos, manager, grid, *groups)
 
   def isClick(self, *groups):
     mouse_pos = pg.mouse.get_pos()
@@ -824,104 +902,89 @@ class Button(Sprite):  ############# button ##################
 
 class killShadow(Collider):  ########### kill shadow ########
 
-  def __init__(self, startx, starty, width, height, manager, *groups):
-    super().__init__("sprites/BGs/NewBlackBG.png", startx, starty, manager,
+  def __init__(self, rect, manager, *groups):
+    image = pg.transform.scale(pg.image.load("sprites/BGs/blackBG.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    super().__init__(image, (rect[0], rect[1]), manager,
                      *groups)
 
-    self.startx = startx
-    self.starty = starty
+    self.rectCoverage = rect
+    self.startx = rect[0]
+    self.starty = rect[1]
     self.manager = manager
-    tempImage = Image.open("sprites/BGs/NewBlackBG.png")
+    tempImage = Image.open("sprites/BGs/blackBG.png")
 
-    self.imageWidth = tempImage.width
-    self.imageHeight = tempImage.height
-    self.width = width
-    self.height = height
-    self.rect = pg.Rect(startx * manager.tileSize, starty * manager.tileSize,
-                        self.width * manager.tileSize,
-                        self.height * manager.tileSize)
+    self.imageWidth, self.imageHeight = image.get_size()
+    self.width = rect[2]
+    self.height = rect[3]
+    self.rect = pg.Rect(rect[0] * manager.tileSize[0], rect[1] * manager.tileSize[1],
+                        rect[2] * manager.tileSize[0],
+                        rect[3] * manager.tileSize[1])
     self.rect.center = [
-        startx * manager.tileSize + self.width * self.imageWidth // 2,
-        starty * manager.tileSize + self.height * self.imageHeight // 2
+        rect[0] * manager.tileSize[0] + self.width * self.imageWidth // 2,
+        rect[1] * manager.tileSize[1] + self.height * self.imageHeight // 2
     ]
 
   def addSelf(self, manager):
     manager.kill_shadow.add(self)
 
   def draw(self, screen):
-    for i in range(self.width):
-      for j in range(self.height):
+    for i in range(round(self.width)):
+      for j in range(round(self.height)):
         tempRect = pg.Rect(
-            self.startx * self.manager.tileSize + (i * self.imageWidth),
-            self.starty * self.manager.tileSize + (j * self.imageHeight),
+            self.startx * self.manager.tileSize[0] + (i * self.imageWidth),
+            self.starty * self.manager.tileSize[1] + (j * self.imageHeight),
             self.imageWidth, self.imageHeight)
         screen.blit(self.image, tempRect)
 
 
 class Wall(Collider):  ############# wall  ##################
 
-  def __init__(self, startx, starty, manager, vertical, num, shadow, *groups):
+  def __init__(self, pos, vertical, num, shadow, manager, *groups):
+
     wallImage = Image.open("sprites/Walls/wall.png")
     wallImage = wallImage.crop((0, 0, 85, 400))
-    wallImage.resize((manager.tileSize, manager.tileSize)).save(
-        "sprites/Walls/newWallV.png")  # walls are 25 x 25
-
-    wallImage = Image.open("sprites/Walls/newWallV.png")
-    wallImage.rotate(270, expand=True).save("sprites/Walls/newWallH.png")
+    wallImage.save( "sprites/Walls/newWall.png")
 
     wallImage = Image.open("sprites/Walls/solidWall.png")
     wallImage = wallImage.crop((0, 0, 120, 400))
-    wallImage.resize((manager.tileSize, manager.tileSize)).save(
-        "sprites/Walls/newSWallV.png")  # walls are 25 x 25
-
-    wallImage = Image.open("sprites/Walls/newSWallV.png")
-    wallImage.rotate(270, expand=True).save("sprites/Walls/newSWallH.png")
+    wallImage.save("sprites/Walls/newSWall.png")
 
     self.shadow = shadow
     self.vertical = vertical  # boolean
     self.num = num  # number of walls
     if self.shadow:
-      if (self.vertical):
-        image = "sprites/Walls/newSWallV.png"
-      else:
-        image = "sprites/Walls/newSWallH.png"
+      image = pg.transform.scale(pg.image.load("sprites/Walls/newSWall.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
     else:
-      if (self.vertical):
-        image = "sprites/Walls/newWallV.png"
-      else:
-        image = "sprites/Walls/newWallH.png"
-    super().__init__(image, startx, starty, manager, shadow, *groups)
-    self.startx = startx
-    self.starty = starty
+      image = pg.transform.scale(pg.image.load("sprites/Walls/newWall.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+
+    super().__init__(image, pos, manager, shadow, *groups)
+    self.startx = pos[0]
+    self.starty = pos[1]
+    self.manager = manager
+
 
     if self.vertical:
-      if self.shadow:
-        tempImage = Image.open("sprites/Walls/newSWallV.png")
-      else:
-        tempImage = Image.open("sprites/Walls/newWallV.png")
-      self.width = tempImage.width
-      self.height = tempImage.height
-      self.rect = pg.Rect(startx * manager.tileSize, starty * manager.tileSize,
+      self.width = self.rect.width
+      self.height = self.rect.height
+      self.rect = pg.Rect(pos[0] * manager.tileSize[0], pos[1] * manager.tileSize[1],
                           self.width, self.height * num)
       self.rect.center = [
-          startx * manager.tileSize + self.width // 2,
-          starty * manager.tileSize + self.height * num // 2
+          pos[0] * manager.tileSize[0] + self.width / 2,
+          pos[1] * manager.tileSize[1] + self.height * num / 2
       ]
     else:
-      if self.shadow:
-        tempImage = Image.open("sprites/Walls/newSWallH.png")
-      else:
-        tempImage = Image.open("sprites/Walls/newWallH.png")
-      self.width = tempImage.width
-      self.height = tempImage.height
-      self.rect = pg.Rect(startx * manager.tileSize, starty * manager.tileSize,
+      self.image = pg.transform.rotate(self.image, 90)
+      self.rect = self.image.get_rect()
+      self.width = self.rect.width
+      self.height = self.rect.height
+      self.rect = pg.Rect(pos[0] * manager.tileSize[0], pos[1] * manager.tileSize[1],
                           self.width * num, self.height)
       self.rect.center = [
-          startx * manager.tileSize + self.width * num // 2,
-          starty * manager.tileSize + self.height // 2
+          pos[0] * manager.tileSize[0] + self.width * num / 2,
+          pos[1] * manager.tileSize[1] + self.height / 2
       ]
 
-  def addSelf(self, manager):
+  def addSelf(self, manager): 
     manager.wall_group.add(self)
     if (self.shadow):
       manager.shadow_group.add(self)
@@ -941,23 +1004,42 @@ class Wall(Collider):  ############# wall  ##################
 
 class Background(Sprite):  ##########  BG  ###############
 
-  def __init__(self, image, manager):
-    BG = Image.open("sprites/BGs/edge.png")
-    BG.thumbnail((manager.tileSize, manager.tileSize))
-    BG.save("sprites/BGs/NewBG.png")
+  def __init__(self, image, manager, tile=True):
+    if not tile:
+      image = pg.image.load(image).convert_alpha()
+      image = pg.transform.scale(image, (manager.screenWidth, manager.screenHeight))
+    else:
+      image = pg.transform.scale(pg.image.load(image).convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    BG = Image.open("sprites/BGs/blackBG.png")
-    BG.thumbnail((manager.tileSize, manager.tileSize))
-    BG.save("sprites/BGs/NewBlackBG.png")
+    self.tile = tile
 
-    super().__init__(image, 0, 0, manager)
+
+    if tile:
+        super().__init__(image, (0,0), manager)
+    else:
+        super().__init__(image, (manager.screenWidth / 2, manager.screenHeight / 2), manager, False)
 
 
   def draw(self, screen):
-    width, height = screen.get_size()
-    for col in range(width // self.rect.width):
-      for row in range(height // self.rect.height):
-        tempRect = pg.Rect(col * self.rect.width, row * self.rect.height, col,
-                           row)
-        screen.blit(self.image, tempRect)
+    if self.tile:
+        width, height = screen.get_size()
+        for col in range(width // self.rect.width):
+          for row in range(height // self.rect.height):
+            tempRect = pg.Rect(col * self.rect.width, row * self.rect.height, col,
+                               row)
+            screen.blit(self.image, tempRect)
+    else:
+      screen.blit(self.image, self.rect)
+
+
+class Grid: ################ grid ###################
+  def __init__(self, manager):
+    self.manager = manager
+
+  def draw(self, screen):
+    for i in range(round(self.manager.screenWidth / self.manager.tileSize[0])):
+      pg.draw.line(screen, (0, 0, 0), (i * self.manager.tileSize[0], 0), (i * self.manager.tileSize[0], self.manager.screenHeight))
+    for i in range(round(self.manager.screenHeight / self.manager.tileSize[1])):
+      pg.draw.line(screen, (0, 0, 0), (0, i * self.manager.tileSize[1]), (self.manager.screenWidth, i * self.manager.tileSize[1]))
+
 

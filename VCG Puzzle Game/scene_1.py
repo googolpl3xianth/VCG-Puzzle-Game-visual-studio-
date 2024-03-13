@@ -6,108 +6,138 @@ import scenes as scn
 
 def main(gameManager):  # first scene
 
-  gameManager.Player.rect.x = (2 + .5) * gameManager.tileSize - gameManager.Player.rect.width / 2
-  gameManager.Player.rect.y = (6 + .5) * gameManager.tileSize - gameManager.Player.rect.height / 2
-
   pg.display.set_caption('scene_1')
   ##################### a ########################
   all_sprites = pg.sprite.Group()
-  background = spr.Background("sprites/BGs/NewBG.png", gameManager)
+  background = spr.Background("sprites/BGs/edge.png", gameManager)
 
-  mentor = spr.Sprite("sprites/NPCs/NMentor.png", 37.5, 100, gameManager, False, False)
+  mentorImage = Image.open("sprites/NPCs/Mentor.png").crop((100, 80, 332, 590)).save("sprites/NPCs/NMentor.png")
+  mentorImage = pg.transform.scale(pg.image.load("sprites/NPCs/NMentor.png").convert_alpha(), (int(gameManager.tileSize[0]), int(gameManager.tileSize[1]) * 2))
+  mentor = spr.Sprite(mentorImage, (2, 3.5), gameManager, True)
 
-  text_group = pg.sprite.Group(spr.text(5, 3, gameManager, "Use shift to enter shadow mode", (0, 255, 255), (0, 255, 0)))
+  text_group = pg.sprite.Group(
+      spr.text((3, 3), 200, "Use shift to enter shadow mode", gameManager, 1))
 
-  wall_group = pg.sprite.Group(
-      spr.Wall(4, 0, gameManager, True, 12, False),
-      spr.Wall(10, 4, gameManager, False, 7, True),
-      spr.Wall(8, 0, gameManager, True, 5, True),
-      spr.Wall(15, 0, gameManager, True, 5, True),
-      spr.Wall(0, 11, gameManager, False, 16, True),
-      spr.Wall(0, 0, gameManager, False, 16, True),
-      spr.Wall(0, 0, gameManager, True, 12, True))
-  box_group = pg.sprite.Group(spr.Box(9, 4, gameManager, True))
-  
+  wall_group = pg.sprite.Group(spr.Wall((6, 0), True, 12, False, gameManager),
+                               spr.Wall((11, 2), False, 1, True, gameManager),
+                               spr.Wall((12, 4), False, 9, True, gameManager),
+                               spr.Wall((10, 0), True, 5, True, gameManager),
+                               spr.Wall((21, 0), True, 5, True, gameManager),
+                               spr.Wall((0, 11), False, 22, True, gameManager),
+                               spr.Wall((0, 0), False, 22, True, gameManager),
+                               spr.Wall((0, 0), True, 12, True, gameManager))
+  box_group = pg.sprite.Group(spr.Box((11, 4), False, gameManager))
+
   if not (gameManager.searchInv("key1")):
     collectible_group = pg.sprite.Group(
-        spr.Collectable(13, 2, "key", "key1",
-                       gameManager))
+        spr.Collectable((15, 2), "key", "key1", gameManager))
   else:
     collectible_group = pg.sprite.Group()
 
-  all_sprites.add(background, wall_group, box_group, collectible_group, mentor, gameManager.Player, text_group)
+  all_sprites.add(background, wall_group, box_group, collectible_group, mentor,
+                  gameManager.Player, text_group)
 
-  scene_1_a = scn.scene(gameManager, all_sprites)
-
+  scene_1_a = scn.scene(gameManager, all_sprites, (2, 6))
 
   ######################### b #######################
 
   all_sprites = pg.sprite.Group()
-  wall_group = pg.sprite.Group(
-    spr.Wall(4, 4, gameManager, True, 8, True),
-    spr.Wall(7, 0, gameManager, True, 8, True),
-    spr.Wall(0, 4, gameManager, False, 1, True),
-    spr.Wall(0, 0, gameManager, True, 4, True),
-    spr.Wall(0, 12, gameManager, False, 16, True),
-    spr.Wall(0, 0, gameManager, False, 16, True),
-    spr.Wall(4, 11, gameManager, False, 12, True),
-    spr.Wall(15, 0, gameManager, True, 8, True),
-    spr.Wall(15, 10, gameManager, True, 1, True))
-  box_group = pg.sprite.Group(spr.Box(5, 4, gameManager, True),
-                            spr.Box(6, 4, gameManager, True))
-  door_group = pg.sprite.Group(
-    spr.Door(15, 8, "W", 2, "key1", gameManager))
-  enemy_group = pg.sprite.Group(spr.Guard(6, 9, 6, 10, gameManager))
+  wall_group = pg.sprite.Group(spr.Wall((4, 4), True, 8, True, gameManager),
+                               spr.Wall((7, 0), True, 8, True, gameManager),
+                               spr.Wall((0, 4), False, 1, True, gameManager),
+                               spr.Wall((0, 0), True, 4, True, gameManager),
+                               spr.Wall((0, 0), False, 22, True, gameManager),
+                               spr.Wall((4, 11), False, 18, True, gameManager),
+                               spr.Wall((21, 0), True, 8, True, gameManager),
+                               spr.Wall((21, 10), True, 1, True, gameManager))
+  box_group = pg.sprite.Group(spr.Box((5, 4), True, gameManager),
+                              spr.Box((6, 4), True, gameManager))
+  door_group = pg.sprite.Group(spr.Door((21, 8), "W", (2, [0, 0]), "key1", gameManager))
+  enemy_group = pg.sprite.Group(spr.Guard((6, 9), 6, 7, gameManager))
   text_group = pg.sprite.Group(
-    spr.text(4, 3, gameManager, "be careful of the guard"))
+      spr.text((4, 3), 100, "be careful of the guard", gameManager, 1))
 
-  all_sprites.add(background, wall_group, box_group, gameManager.Player, door_group, enemy_group, text_group)
+  all_sprites.add(background, wall_group, box_group, gameManager.Player,
+                  door_group, enemy_group, text_group)
 
-  scene_1_b = scn.scene(gameManager, all_sprites)
+  scene_1_b = scn.scene(gameManager, all_sprites, (0, 7))
 
   ##################### c ########################
   all_sprites = pg.sprite.Group()
 
-  background = spr.Background("sprites/BGs/NewBG.png", gameManager)
+  wall_group = pg.sprite.Group(spr.Wall((18, 0), False, 1, True, gameManager),
+                               spr.Wall((2, 3), True, 3, True, gameManager),
+                               spr.Wall((2, 7), True, 4, True, gameManager),
+                               spr.Wall((3, 5), False, 3, True, gameManager),
+                               spr.Wall((3, 7), False, 3, True, gameManager),
+                               spr.Wall((18, 2), False, 1, True, gameManager),
+                               spr.Wall((16, 3), True, 1, True, gameManager),
+                               spr.Wall((19, 7), True, 3, True, gameManager),
+                               spr.Wall((16, 4), False, 2, True, gameManager),
+                               spr.Wall((19, 4), False, 2, True, gameManager),
+                               spr.Wall((19, 0), True, 3, True, gameManager),
+                               spr.Wall((2, 2), False, 15, True, gameManager),
+                               spr.Wall((0, 11), False, 20, True, gameManager),
+                               spr.Wall((0, 0), False, 17, True, gameManager),
+                               spr.Wall((0, 0), True, 12, True, gameManager),
+                               spr.Wall((21, 0), True, 7, True, gameManager),
+                               spr.Wall((16, 9), False, 3, True, gameManager))
 
-  wall_group = pg.sprite.Group(
-                               spr.Wall(12, 0, gameManager, False, 1, True),
-                               spr.Wall(2, 3, gameManager, True, 3, True),
-                               spr.Wall(2, 7, gameManager, True, 4, True),
-                               spr.Wall(3, 5, gameManager, False, 3, True),
-                               spr.Wall(3, 7, gameManager, False, 3, True),
-                               spr.Wall(12, 2, gameManager, False, 1, True),
-                               spr.Wall(10, 3, gameManager, True, 1, True),
-                               spr.Wall(13, 7, gameManager, True, 3, True),
-                               spr.Wall(10, 4, gameManager, False, 2, True),
-                               spr.Wall(13, 4, gameManager, False, 2, True),
-                               spr.Wall(13, 0, gameManager, True, 3, True),
-                               spr.Wall(0, 11, gameManager, False, 11, True),
-                               spr.Wall(2, 2, gameManager, False, 9, True),
-                               spr.Wall(0, 11, gameManager, False, 14, True),
-                               spr.Wall(0, 0, gameManager, False, 11, True),
-                               spr.Wall(0, 0, gameManager, True, 12, True),
-                               spr.Wall(15, 1, gameManager, True, 11, True),
-                               spr.Wall(10, 9, gameManager, False, 3, True))      
-
-  box_group = pg.sprite.Group(spr.Box(11, 1, gameManager, False), spr.Box(2, 6, gameManager, True))
-  rSwitchWall_group = pg.sprite.Group(spr.switchWall(2, 1, gameManager, "red", False), spr.switchWall(1, 2, gameManager, "red", False))
-  bSwitchWall_group = pg.sprite.Group(spr.switchWall(12, 3, gameManager, "blue", False), spr.switchWall(12, 5, gameManager, "blue", True), spr.switchWall(14, 6, gameManager, "blue", False), spr.switchWall(13, 10, gameManager, "blue", True))
-  gSwitchWall_group = pg.sprite.Group(spr.switchWall(10, 10, gameManager, "green", True))
-  switch_group = pg.sprite.Group(spr.Switch(1, 1, gameManager, "red", rSwitchWall_group), spr.Switch(12, 4, gameManager, "blue", bSwitchWall_group), spr.Switch(14, 7, gameManager, "blue", bSwitchWall_group), spr.Switch(14, 8, gameManager, "blue", bSwitchWall_group), spr.Switch(14, 9, gameManager, "blue", bSwitchWall_group), spr.Switch(14, 10, gameManager, "blue", bSwitchWall_group), spr.Switch(14, 11, gameManager, "blue", bSwitchWall_group), spr.Switch(11, 10, gameManager, "green", gSwitchWall_group))
+  spike_group = pg.sprite.Group(spr.Spike((21, 7), gameManager),
+                                spr.Spike((21, 8), gameManager),
+                                spr.Spike((21, 9), gameManager),
+                                spr.Spike((21, 10), gameManager),
+                                spr.Spike((21, 11), gameManager))
+  box_group = pg.sprite.Group(spr.Box((17, 1), False, gameManager),
+                              spr.Box((2, 6), True, gameManager))
+  rSwitchWall_group = pg.sprite.Group(
+      spr.switchWall((2, 1), "red", False, gameManager),
+      spr.switchWall((1, 2), "red", False, gameManager))
+  bSwitchWall_group = pg.sprite.Group(
+      spr.switchWall((18, 3), "blue", False, gameManager),
+      spr.switchWall((18, 5), "blue", True, gameManager),
+      spr.switchWall((20, 6), "blue", False, gameManager),
+      spr.switchWall((19, 10), "blue", True, gameManager))
+  gSwitchWall_group = pg.sprite.Group(
+      spr.switchWall((16, 10), "green", True, gameManager))
+  switch_group = pg.sprite.Group(
+      spr.Switch((1, 1), "red", rSwitchWall_group, gameManager),
+      spr.Switch((18, 4), "blue", bSwitchWall_group, gameManager),
+      spr.Switch((20, 7), "blue", bSwitchWall_group, gameManager),
+      spr.Switch((20, 8), "blue", bSwitchWall_group, gameManager),
+      spr.Switch((20, 9), "blue", bSwitchWall_group, gameManager),
+      spr.Switch((20, 10), "blue", bSwitchWall_group, gameManager),
+      spr.Switch((20, 11), "blue", bSwitchWall_group, gameManager),
+      spr.Switch((17, 10), "green", gSwitchWall_group, gameManager))
 
   if not (gameManager.searchInv("coin1")):
-    collectible_group = pg.sprite.Group(spr.Collectable(12, 10, "coin", "coin1", gameManager))
+    collectible_group = pg.sprite.Group(
+        spr.Collectable((18, 10), "coin", "coin1", gameManager))
   else:
     collectible_group = pg.sprite.Group()
 
-  all_sprites.add(background, wall_group, rSwitchWall_group, bSwitchWall_group, gSwitchWall_group, switch_group, collectible_group, box_group, gameManager.Player)
+  all_sprites.add(background, wall_group, rSwitchWall_group, bSwitchWall_group,
+                  gSwitchWall_group, switch_group, collectible_group,
+                  spike_group, box_group, gameManager.Player)
 
-  scene_1_c = scn.scene(gameManager, all_sprites)
-  
+  scene_1_c = scn.scene(gameManager, all_sprites, (20, 0))
 
-  sceneParts = [[scene_1_a, scene_1_c], [scene_1_b]]
+  ##################### d ########################
+  all_sprites = pg.sprite.Group()
 
+  killShadow_group = pg.sprite.Group(
+      spr.killShadow((4, 0, 18, gameManager.screenHeight // gameManager.tileSize[1]), gameManager),
+      spr.killShadow((0, 5, gameManager.screenWidth // gameManager.tileSize [0], 7), gameManager),
+      spr.killShadow((2, 2, 1, 1), gameManager),
+      spr.killShadow((2, 4, 3, 1), gameManager),
+      spr.killShadow((0, 3, 1, 1), gameManager))
 
-  return scn.gameLoop(gameManager, sceneParts)
+  text_group = pg.sprite.Group(spr.text((5, 1), 200, "turn back or be lost to the void", gameManager, 1, (0, 255, 0)))
 
+  all_sprites.add(background, killShadow_group, gameManager.Player, text_group)
+
+  scene_1_d = scn.scene(gameManager, all_sprites, (2, 0))
+
+  sceneParts = [[scene_1_a, scene_1_c], [scene_1_b, scene_1_d]]
+
+  return scn.gameLoop(gameManager, sceneParts, gameManager.sceneIndex[1])
