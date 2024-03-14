@@ -26,8 +26,19 @@ def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager):
 class GameManager:  ########## Game manager #########
 
   def __init__(self, FPS):
+    width, height = pg.display.get_desktop_sizes()[0]
+    width = round(width / 22) * 22
+    self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
+    #self.screen = pg.display.set_mode((width, width * 9/16))
+    self.screenWidth = self.screen.get_width()
+    self.screenHeight = self.screen.get_height()
+    self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
+    #self.tileSize = (self.screenWidth / 22,  self.screenHeight / 12)
+    self.FPS = FPS
+
+    self.sceneIndex = [0, [0, 0]]
     self.Player = Player
-    self.inventoryImage = invetoryShow
+    self.inventoryImage = inventoryImage(self)
     self.wall_group = pg.sprite.Group()
     self.box_group = pg.sprite.Group()
     self.colliding_box_group = pg.sprite.Group()
@@ -40,19 +51,6 @@ class GameManager:  ########## Game manager #########
     self.switch_group = pg.sprite.Group()
     self.switchWall_group = pg.sprite.Group()
     self.kill_shadow = pg.sprite.Group()
-    self.inventory = pg.sprite.Group()
-
-    width, height = pg.display.get_desktop_sizes()[0]
-    width = round(width / 22) * 22
-    self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
-    #self.screen = pg.display.set_mode((width, width * 9/16))
-    self.screenWidth = self.screen.get_width()
-    self.screenHeight = self.screen.get_height()
-    self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
-    #self.tileSize = (self.screenWidth / 22,  self.screenHeight / 12)
-    self.FPS = FPS
-
-    self.sceneIndex = [0, [0, 0]]
 
   def clearLevel(self):
     self.wall_group.empty()
@@ -68,17 +66,6 @@ class GameManager:  ########## Game manager #########
     self.switch_group.empty()
     self.switchWall_group.empty()
     self.kill_shadow.empty()
-
-  def searchInv(self, name):
-    for collectable in self.inventory:
-      if collectable.name == name:
-        return True
-    return False
-
-  def removeCollect(self, name):
-    for collectable in self.inventory:
-      if collectable.name == name:
-        self.inventory.remove(collectable)
 
   def checkCollisions(self):
 
@@ -286,7 +273,7 @@ class GameManager:  ########## Game manager #########
         guard.kill()
 
     collided_collect = pg.sprite.spritecollide(self.Player, self.collect_group,
-                                               False)
+                                               False) # collect * player
     for collect in collided_collect:
       collect.collected()
 
@@ -350,53 +337,74 @@ class Collider(Sprite):  ########## collider #############
       
 
 
-class invetoryShow(Sprite):
+class inventoryImage(Sprite):
   
     def __init__(self, manager, *groups):
       self.manager = manager
       self.font = pg.font.Font('freesansbold.ttf', round(manager.tileSize[1]))
       super().__init__(None, None, manager, *groups)
       manager.inventoryImage = self
-      
-    def sort(self):
-      temp = pg.sprite.Group()
-      while len(self.manager.inventory) > 0:
-        collectible1 = self.manager.inventory.sprites()[0]
-        temp.add(collectible1)
-        self.manager.inventory.remove(collectible1)
-        i = 0
-        for collectable2 in self.manager.inventory:
-          if collectable2.type == collectible1.type:
-            self.manager.inventory.remove(collectable2)
-            i += 1
-        collectible1.num += i
-        
-      for collectible in temp:
-        self.manager.inventory.add(collectible)
-        temp.remove(collectible)
+
+      self.collectibles = pg.sprite.Group()
+      self.keys = Item(pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
+      self.coins = Item(pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
+      self.collectibles.add(self.keys, self.coins)
+
+    def addItem(self, collectible):
+        if collectible.type == "key":
+            self.keys.addItem(collectible)
+        elif collectible.type == "coin":
+            self.coins.addItem(collectible)
+
+    def searchInv(self, name):
+        for item in self.collectibles:
+            if name in item.names:
+                return True
+        return False
+
+    def removeCollect(self, name):
+        for item in self.collectibles:
+            item.names.remove(name)
+            item.num -= 1
+            return True
+        return False
       
        
     def draw(self, screen):
       i = 0
-      
-      for collectible in self.manager.inventory:
-        collectibleImage = collectible.image.copy()
-        alpha = 128
-        collectibleImage.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
-        screen.blit(collectibleImage, ((2 * i + .5) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], collectible.rect.width, collectible.rect.height))
-        text = self.font.render(str(collectible.num), 0, (0,0,0))
-        outline = self.font.render(str(collectible.num), 0, (255,255,255))
-        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
-        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
-        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
-        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
-        screen.blit(text, ((2 * i + 1.75) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], collectible.rect.width, collectible.rect.height))
-        i += 1
-        
+      for item in self.collectibles:
+        if item.num > 0:
+            itemImage = item.image.copy()
+            alpha = 128
+            itemImage.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
+            screen.blit(itemImage, ((2 * i + .5) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
+            text = self.font.render(str(item.num), 0, (0,0,0))
+            outline = self.font.render(str(item.num), 0, (255,255,255))
+            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
+            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
+            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
+            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
+            screen.blit(text, ((2 * i + 1.75) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
+            i += 1
+        else:
+            pass
         
 
+class Item(Sprite):
 
-class Collectable(Collider):  ####### Collectable #########
+    def __init__(self, image, *groups):
+        self.names = []
+        self.num = 0
+        self.image = image
+        
+        super().__init__(image, None, None, *groups)
+
+    def addItem(self, collectible):
+        self.num += 1
+        self.names.append(collectible.name)
+        self.image = collectible.image
+
+class Collectible(Collider):  ####### Collectible #########
 
   def __init__(self, pos, type, name, manager, *groups):
     if type == "key":
@@ -414,18 +422,16 @@ class Collectable(Collider):  ####### Collectable #########
     self.globalFPS = manager.FPS
 
     self.inInventory = False
-    self.name = name
     self.type = type
-    super().__init__(image, pos, manager, *groups)
+    self.name = name
     self.manager = manager
-    self.num = 1
+    super().__init__(image, pos, manager, *groups)
 
   def collected(self):
     self.image = self.frames[0]
-    self.manager.inventory.add(self)
-    self.manager.collect_group.remove(self)
     self.inInventory = True
-    self.manager.inventoryImage.sort()
+    self.manager.inventoryImage.addItem(self)
+    self.kill()
 
   def draw(self, screen):
     if not(self.inInventory):
@@ -912,6 +918,7 @@ class Door(Collider):  ############# door ###########
 
     self.isOpen = False
     self.returnIndex = returnIndex
+
     self.item = item
 
     super().__init__(doorImage, pos, manager, *groups)
@@ -920,7 +927,7 @@ class Door(Collider):  ############# door ###########
       self.image = pg.transform.rotate(self.image, 180)
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.y = pos[1] * manager.tileSize[1]
-      self.playerPos = (manager.screenWidth / manager.tileSize[0] - 1, None)
+      self.playerPos = (manager.screenWidth / manager.tileSize[0] - 2, None)
     elif direction == "W":
       self.rect.right = (pos[0] + 1) * manager.tileSize[0]
       self.rect.y = pos[1] * manager.tileSize[1]
@@ -934,14 +941,14 @@ class Door(Collider):  ############# door ###########
       self.image = pg.transform.rotate(self.image, -90)
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.y = pos[1] * manager.tileSize[1]
-      self.playerPos = (manager.screenHeight / manager.tileSize[1] - 1, None)
+      self.playerPos = (manager.screenHeight / manager.tileSize[1] - 2, None)
 
   def addSelf(self, manager):
     manager.door_group.add(self)
 
   def open(self, manager):
-    if self.isOpen and manager.searchInv(self.item):
-      manager.removeCollect(self.item)
+    if self.isOpen and manager.inventoryImage.searchInv(self.item):
+      manager.inventoryImage.removeCollect(self.item)
       return True
 
 

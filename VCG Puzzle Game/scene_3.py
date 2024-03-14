@@ -60,9 +60,9 @@ def main(gameManager):
       spr.Switch((7, 5), "green", switchWall_group, gameManager),
       spr.Switch((7, 7), "green", switchWall_group, gameManager),
       spr.Switch((7, 9), "green", switchWall_group, gameManager))
-  if not (gameManager.searchInv("key3")):
+  if not (gameManager.inventoryImage.searchInv("key3")):
     collectible_group = pg.sprite.Group(
-        spr.Collectable((10, 9), "key", "key3", gameManager))
+        spr.Collectible((10, 9), "key", "key3", gameManager))
   else:
     collectible_group = pg.sprite.Group()
 

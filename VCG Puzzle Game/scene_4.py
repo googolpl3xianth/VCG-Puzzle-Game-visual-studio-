@@ -27,9 +27,9 @@ def main(gameManager):
 
   kill_shadow = pg.sprite.Group(spr.killShadow((7, 6, 1, 1), gameManager))
 
-  if not (gameManager.searchInv("key4")):
+  if not (gameManager.inventoryImage.searchInv("key4")):
     collectible_group = pg.sprite.Group(
-        spr.Collectable((7, 2), "key", "key4", gameManager))
+        spr.Collectible((7, 2), "key", "key4", gameManager))
   else:
     collectible_group = pg.sprite.Group()
 

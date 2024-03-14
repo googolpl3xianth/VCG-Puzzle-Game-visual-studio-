@@ -15,7 +15,7 @@ def main(gameManager):  # first scene
                                spr.Wall((0, 0), False, 22, True, gameManager),
                                spr.Wall((0, 0), True, 8, True, gameManager),
                                spr.Wall((0, 10), True, 2, True, gameManager))
-  door_group = pg.sprite.Group(spr.Door((0, 8), "E", (4, [1, 1]), "key4", gameManager))
+  door_group = pg.sprite.Group(spr.Door((0, 8), "E", (4, [1, 1]), "key5", gameManager))
 
   all_sprites.add(background, wall_group, gameManager.Player, door_group)
 
@@ -27,7 +27,7 @@ def main(gameManager):  # first scene
                                spr.Wall((0, 0), False, 22, True, gameManager),
                                spr.Wall((21, 0), True, 8, True, gameManager),
                                spr.Wall((21, 10), True, 2, True, gameManager))
-  door_group = pg.sprite.Group(spr.Door((21, 8), "W", (6, [0, 0]), "key5", gameManager))
+  door_group = pg.sprite.Group(spr.Door((21, 8), "W", (6, [0, 0]), "key6", gameManager))
 
   brokenWall = pg.sprite.Group(spr.Sprite(pg.transform.scale(pg.image.load("sprites/Walls/brokenWall.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1])), (0, 11), gameManager))
 
@@ -51,9 +51,9 @@ def main(gameManager):  # first scene
   wall_group = pg.sprite.Group(spr.Wall((19, 0), True, 1, True, gameManager),
                                spr.Wall((19, 1), False, 3, True, gameManager))
 
-  if not (gameManager.searchInv("key5")):
+  if not (gameManager.inventoryImage.searchInv("key6")):
     collectible_group = pg.sprite.Group(
-        spr.Collectable((20, 0), "key", "key5", gameManager))
+        spr.Collectible((20, 0), "key", "key6", gameManager))
   else:
     collectible_group = pg.sprite.Group()
 

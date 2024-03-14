@@ -25,9 +25,9 @@ def main(gameManager):  # first scene
   switch_group = pg.sprite.Group(
       spr.Switch((6, 1), "red", switchWall_group, gameManager))
 
-  if not (gameManager.searchInv("key2")):
+  if not (gameManager.inventoryImage.searchInv("key2")):
     collectible_group = pg.sprite.Group(
-        spr.Collectable((9, 9), "key", "key2", gameManager))
+        spr.Collectible((9, 9), "key", "key2", gameManager))
   else:
     collectible_group = pg.sprite.Group()
   all_sprites.add(background, wall_group, switchWall_group, switch_group,
@@ -49,9 +49,9 @@ def main(gameManager):  # first scene
   box_group = pg.sprite.Group(spr.Box((7, 10), False, gameManager))
   door_group = pg.sprite.Group(spr.Door((21, 8), "W", (3, [0, 0]), "key2", gameManager))
 
-  if not (gameManager.searchInv("coin2")):
+  if not (gameManager.inventoryImage.searchInv("coin2")):
     collectible_group = pg.sprite.Group(
-        spr.Collectable((6, 3), "coin", "coin2", gameManager))
+        spr.Collectible((6, 3), "coin", "coin2", gameManager))
   else:
     collectible_group = pg.sprite.Group()
 

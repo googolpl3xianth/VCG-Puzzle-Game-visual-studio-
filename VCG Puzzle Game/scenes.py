@@ -58,7 +58,7 @@ class scene:
     for group in all_sprites:
       if group is not (None):
         self.all_sprites.add(pg.sprite.Group(group))
-    self.all_sprites.add(pg.sprite.Group(spr.invetoryShow(gameManager)))
+    self.all_sprites.add(pg.sprite.Group(gameManager.inventoryImage))
 
   def main(self):
     if self.blank:
@@ -167,8 +167,6 @@ class scene:
 
 def gameLoop(gameManager, scenes, start=[0,0]):
   tempArray = start.copy()
-  #gameManager.sceneIndex[1][0] = tempArray[0]
-  #gameManager.sceneIndex[1][1] = tempArray[1]
 
   ################ void #################
   all_sprites = pg.sprite.Group()
