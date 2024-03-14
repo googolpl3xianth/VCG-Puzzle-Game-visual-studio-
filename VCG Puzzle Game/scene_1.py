@@ -16,7 +16,7 @@ def main(gameManager):  # first scene
   mentor = spr.Sprite(mentorImage, (2, 3.5), gameManager, True)
 
   text_group = pg.sprite.Group(
-      spr.text((3, 3), 200, "Use shift to enter shadow mode", gameManager, 1))
+      spr.text((3, 3), 8, "Use shift to enter shadow mode", gameManager, 1))
 
   wall_group = pg.sprite.Group(spr.Wall((6, 0), True, 12, False, gameManager),
                                spr.Wall((11, 2), False, 1, True, gameManager),
@@ -55,7 +55,7 @@ def main(gameManager):  # first scene
   door_group = pg.sprite.Group(spr.Door((21, 8), "W", (2, [0, 0]), "key1", gameManager))
   enemy_group = pg.sprite.Group(spr.Guard((6, 9), 6, 7, gameManager))
   text_group = pg.sprite.Group(
-      spr.text((4, 3), 100, "be careful of the guard", gameManager, 1))
+      spr.text((4, 3), 4, "be careful of the guard", gameManager, 1))
 
   all_sprites.add(background, wall_group, box_group, gameManager.Player,
                   door_group, enemy_group, text_group)

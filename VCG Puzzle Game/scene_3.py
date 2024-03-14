@@ -84,11 +84,21 @@ def main(gameManager):
   GSwitchWall_group = pg.sprite.Group(
       spr.switchWall((9, 7), "green", True, gameManager),
       spr.switchWall((9, 8), "green", True, gameManager),
-      spr.switchWall((7, 10), "green", False, gameManager),
-      spr.switchWall((10, 10), "green", False, gameManager))
+      spr.switchWall((7, 10), "green", False, gameManager))
   GSwitch_group = pg.sprite.Group(
       spr.Switch((8, 10), "green", GSwitchWall_group, gameManager),
-      spr.Switch((9, 10), "green", GSwitchWall_group, gameManager))
+      spr.Switch((9, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((10, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((11, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((12, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((13, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((14, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((15, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((16, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((17, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((18, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((19, 10), "green", GSwitchWall_group, gameManager),
+      spr.Switch((20, 10), "green", GSwitchWall_group, gameManager))
   BSwitchWall_group = pg.sprite.Group(
       spr.switchWall((8, 8), "blue", False, gameManager))
   BSwitch_group = pg.sprite.Group(

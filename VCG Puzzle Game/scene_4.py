@@ -1,3 +1,4 @@
+from os import truncate
 from PIL import Image
 import pygame as pg
 import sprites as spr
@@ -40,13 +41,18 @@ def main(gameManager):
   ######################### b #######################
   all_sprites = pg.sprite.Group()
   wall_group = pg.sprite.Group(spr.Wall((0, 6), False, 21, False, gameManager),
+                               spr.Wall((1, 7), False, 20, True, gameManager),
+                               spr.Wall((1, 9), False, 15, True, gameManager),
                                spr.Wall((0, 11), False, 22, True, gameManager),
                                spr.Wall((0, 0), False, 22, True, gameManager),
                                spr.Wall((21, 0), True, 8, True, gameManager),
+                               spr.Wall((1, 10), True, 1, True, gameManager),
                                spr.Wall((21, 10), True, 2, True, gameManager))
   door_group = pg.sprite.Group(spr.Door((21, 8), "W", (5, [0, 0]), "key4", gameManager))
+  gaurd = pg.sprite.Group(spr.Guard((2, 8), 15, 7, gameManager))
+  box_group = pg.sprite.Group(spr.Box((1, 8), False, gameManager))
 
-  all_sprites.add(background, wall_group, gameManager.Player, door_group)
+  all_sprites.add(background, wall_group, gaurd, box_group, gameManager.Player, door_group)
 
   scene_4_b = scn.scene(gameManager, all_sprites, (0, 9))
 
@@ -78,7 +84,7 @@ def main(gameManager):
           (7, (gameManager.screenHeight // gameManager.tileSize[1]) - 5, 5, 2),
           gameManager),
       spr.killShadow(
-          (13, (gameManager.screenHeight // gameManager.tileSize[1]) - 5, 3, 2),
+          (13, (gameManager.screenHeight // gameManager.tileSize[1]) - 5, 9, 5),
           gameManager),
       spr.killShadow(
           (12, (gameManager.screenHeight // gameManager.tileSize[1]) - 4, 4, 2),

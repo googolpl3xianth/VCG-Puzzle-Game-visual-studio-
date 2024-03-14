@@ -58,6 +58,7 @@ class scene:
     for group in all_sprites:
       if group is not (None):
         self.all_sprites.add(pg.sprite.Group(group))
+    self.all_sprites.add(pg.sprite.Group(spr.invetoryShow(gameManager)))
 
   def main(self):
     if self.blank:
@@ -65,6 +66,8 @@ class scene:
 
     for sprite in self.all_sprites:
       sprite.addSelf(self.gameManager)
+    
+
 
     menu = False
     returnValue = None
@@ -132,8 +135,6 @@ class scene:
 
       if not (self.gameManager.Player.alive):
         self.gameManager.clearLevel()
-        for collectible in self.gameManager.inventory:
-          self.gameManager.removeCollect(collectible.name)
         self.gameManager.Player.alive = True
         self.gameManager.Player.setPos(self.playerPos[0], self.playerPos[1])
         return self.gameManager.sceneIndex
@@ -179,7 +180,7 @@ def gameLoop(gameManager, scenes, start=[0,0]):
 
   all_sprites.add(background, kill_shadow, gameManager.Player)
 
-  if not(gameManager.sceneIndex == 5):
+  if not(gameManager.sceneIndex[0] == 5):
     font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
     WIPFont1 = font.render("Work in progress, ignore this place", True,
                            (255, 255, 255))
@@ -202,12 +203,12 @@ def gameLoop(gameManager, scenes, start=[0,0]):
 
 
   all_sprites.add(background, kill_shadow)
-  if gameManager.sceneIndex == 5:
+  if gameManager.sceneIndex[0] == 5:
     mapImage = Image.open(
       "sprites/Maps/map5.png")
     mapImage.thumbnail((gameManager.tileSize[0] * 3, gameManager.tileSize[1] * 3))
     mapImage.save("sprites/Maps/NMap5.png")
-    map = spr.Sprite("sprites/Maps/NMap5.png", (gameManager.screenWidth // 2,
+    map = spr.Sprite(pg.image.load("sprites/Maps/NMap5.png"), (gameManager.screenWidth // 2,
     gameManager.screenHeight // 2), gameManager, False)
     all_sprites.add(map)
   all_sprites.add(gameManager.Player)
@@ -242,6 +243,7 @@ def gameLoop(gameManager, scenes, start=[0,0]):
         shadowTimer += 1
       except TypeError:
         try:
+          print("yep")
           for shadowRect in sceneParts[shadowIndex[0]][shadowIndex[1]].shadowSpawn:
             if shadowRect.colliderect(gameManager.Player.rect):
               gameManager.sceneIndex[1][0] = shadowIndex[0]

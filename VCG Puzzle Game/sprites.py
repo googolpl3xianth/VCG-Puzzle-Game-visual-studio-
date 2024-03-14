@@ -27,6 +27,7 @@ class GameManager:  ########## Game manager #########
 
   def __init__(self, FPS):
     self.Player = Player
+    self.inventoryImage = invetoryShow
     self.wall_group = pg.sprite.Group()
     self.box_group = pg.sprite.Group()
     self.colliding_box_group = pg.sprite.Group()
@@ -48,6 +49,7 @@ class GameManager:  ########## Game manager #########
     self.screenWidth = self.screen.get_width()
     self.screenHeight = self.screen.get_height()
     self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
+    #self.tileSize = (self.screenWidth / 22,  self.screenHeight / 12)
     self.FPS = FPS
 
     self.sceneIndex = [0, [0, 0]]
@@ -243,21 +245,31 @@ class GameManager:  ########## Game manager #########
     for guard in self.guard_group:
       guard_box = pg.sprite.spritecollide(guard, self.box_group, False) # guard * box
       if len(guard_box) > 0:
-        if not(guard.pos_float[0] == guard.preX or guard.pos_float[0] == guard.preY):
+        if not(guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY):
           guard.pos_float[0] = guard.preX
           guard.pos_float[1] = guard.preY
           guard.rect.x = round(guard.pos_float[0])
           guard.rect.y = round(guard.pos_float[1])
+          guard.cover = 0
           guard.turnSelf()
       else:
         guard_wall = pg.sprite.spritecollide(guard, self.wall_group, False)
         if len(guard_wall) > 0:
-          guard.turn = not(guard.turn)
           guard.pos_float[0] = guard.preX
           guard.pos_float[1] = guard.preY
           guard.rect.x = round(guard.pos_float[0])
           guard.rect.y = round(guard.pos_float[1])
+          guard.cover = 0
           guard.turnSelf()
+        else:
+          guard_door = pg.sprite.spritecollide(guard, self.door_group, False)
+          if len(guard_door) > 0:
+            guard.pos_float[0] = guard.preX
+            guard.pos_float[1] = guard.preY
+            guard.rect.x = round(guard.pos_float[0])
+            guard.rect.y = round(guard.pos_float[1])
+            guard.cover = 0
+            guard.turnSelf()
 
     collided_enemies = pg.sprite.spritecollide(self.Player, self.enemy_group,
                                                False)
@@ -296,15 +308,16 @@ class Sprite(pg.sprite.Sprite):  ######### sprite #########
                *groups):
     super().__init__(*groups)
 
-
-    self.image = image
-    self.rect = image.get_rect()
-
-    if grid:
-      self.rect.x = (pos[0] + .5) * manager.tileSize[0] - self.rect.width / 2
-      self.rect.y = (pos[1] + .5) * manager.tileSize[1] - self.rect.height / 2
-    else:
-      self.rect.center = (pos[0], pos[1])
+    if image is not None:
+        self.image = image
+        self.rect = image.get_rect()
+    
+    if pos is not None:
+        if grid:
+          self.rect.x = (pos[0] + .5) * manager.tileSize[0] - self.rect.width / 2
+          self.rect.y = (pos[1] + .5) * manager.tileSize[1] - self.rect.height / 2
+        else:
+          self.rect.center = (pos[0], pos[1])
 
   def update(self):
     pass
@@ -334,6 +347,53 @@ class Collider(Sprite):  ########## collider #############
   def addSelf(self, manager):
     if (self.shadow):
       manager.shadow_group.add(self)
+      
+
+
+class invetoryShow(Sprite):
+  
+    def __init__(self, manager, *groups):
+      self.manager = manager
+      self.font = pg.font.Font('freesansbold.ttf', round(manager.tileSize[1]))
+      super().__init__(None, None, manager, *groups)
+      manager.inventoryImage = self
+      
+    def sort(self):
+      temp = pg.sprite.Group()
+      while len(self.manager.inventory) > 0:
+        collectible1 = self.manager.inventory.sprites()[0]
+        temp.add(collectible1)
+        self.manager.inventory.remove(collectible1)
+        i = 0
+        for collectable2 in self.manager.inventory:
+          if collectable2.type == collectible1.type:
+            self.manager.inventory.remove(collectable2)
+            i += 1
+        collectible1.num += i
+        
+      for collectible in temp:
+        self.manager.inventory.add(collectible)
+        temp.remove(collectible)
+      
+       
+    def draw(self, screen):
+      i = 0
+      
+      for collectible in self.manager.inventory:
+        collectibleImage = collectible.image.copy()
+        alpha = 128
+        collectibleImage.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
+        screen.blit(collectibleImage, ((2 * i + .5) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], collectible.rect.width, collectible.rect.height))
+        text = self.font.render(str(collectible.num), 0, (0,0,0))
+        outline = self.font.render(str(collectible.num), 0, (255,255,255))
+        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
+        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
+        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
+        screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, collectible.rect.width, collectible.rect.height))
+        screen.blit(text, ((2 * i + 1.75) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], collectible.rect.width, collectible.rect.height))
+        i += 1
+        
+        
 
 
 class Collectable(Collider):  ####### Collectable #########
@@ -353,20 +413,22 @@ class Collectable(Collider):  ####### Collectable #########
     self.clock = 0
     self.globalFPS = manager.FPS
 
-    self.inInventor = False
+    self.inInventory = False
     self.name = name
+    self.type = type
     super().__init__(image, pos, manager, *groups)
     self.manager = manager
+    self.num = 1
 
   def collected(self):
+    self.image = self.frames[0]
     self.manager.inventory.add(self)
     self.manager.collect_group.remove(self)
-    self.inInventor = True
+    self.inInventory = True
+    self.manager.inventoryImage.sort()
 
   def draw(self, screen):
-    if (self.inInventor):
-      pass
-    else:
+    if not(self.inInventory):
       screen.blit(self.image, self.rect)
 
   def addSelf(self, manager):
@@ -374,14 +436,15 @@ class Collectable(Collider):  ####### Collectable #########
 
 
   def animate(self):
-    FPS = 6
+    if not(self.inInventory):
+        FPS = 6
 
-    numFrames = self.globalFPS / FPS
-    if self.clock > self.globalFPS:
-      self.clock = 0
-    self.clock += 1
+        numFrames = self.globalFPS / FPS
+        if self.clock > self.globalFPS:
+          self.clock = 0
+        self.clock += 1
 
-    self.image = self.frames[round((self.clock / numFrames)) % len(self.frames)]
+        self.image = self.frames[round((self.clock / numFrames)) % len(self.frames)]
 
 
 class Player(Collider):  ############ player ##############
@@ -459,8 +522,8 @@ class Player(Collider):  ############ player ##############
     else:
       self.cooldown -= self.windup
       self.windup += 1
-      if self.windup > self.manager.FPS / 8:
-        self.windup = self.manager.FPS / 8
+      if self.windup > self.manager.FPS / 7:
+        self.windup = self.manager.FPS / 7
 
     if keys[pg.K_LSHIFT]:
       self.PShadow = True
@@ -533,7 +596,7 @@ class text(Collider):  ################ text ###############
     self.startx = ((pos[0] + .5) * manager.tileSize[0])
     self.starty = ((pos[1] + .5) * manager.tileSize[1])
 
-    self.textBoxWdith = width
+    self.textBoxWdith = width * manager.tileSize[0]
 
     super().__init__(image, pos, manager, True, *groups)
 
@@ -595,6 +658,9 @@ class visionCone(Collider): ############### guardVision ########
 
   def __init__(self, guard):
     image = pg.transform.scale(pg.image.load("sprites/Enemies/visionCone.png").convert_alpha(), (guard.manager.tileSize[0] * 2, guard.manager.tileSize[1] * 3))
+    image = image.copy()
+    alpha = 128
+    image.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
 
     self.preX = guard.pos_float[0]
     self.preY = guard.pos_float[1]
@@ -613,20 +679,15 @@ class Guard(Collider):  ############ guard ############
                *groups):
     image = pg.transform.scale(pg.image.load("sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-
-    if hor:
-      self.initial = pos[0] * manager.tileSize[0]
-      self.final = (pos[0] + distance) * manager.tileSize[0]
-    else:
-      self.initial = pos[1] * manager.tileSize[1]
-      self.final = (pos[1] + distance) * manager.tileSize[1]
+    self.distance = distance
+    self.cover = 0
 
     self.hor = hor
     self.turn = False
 
     self.preX = pos[0] * manager.tileSize[0]
     self.preY = pos[1] * manager.tileSize[1]
-    self.pos_float = [pos[0]* manager.tileSize[0], pos[1] * manager.tileSize[1]]
+    self.pos_float = [pos[0] * manager.tileSize[0], pos[1] * manager.tileSize[1]]
 
     self.cooldown = 0
     self.windup = speed
@@ -638,8 +699,10 @@ class Guard(Collider):  ############ guard ############
     self.vision = visionCone(self)
 
     if not(hor):
-      self.vision.image = pg.transform.rotate(self.vision.image, 90)
+      self.vision.image = pg.transform.rotate(self.vision.image, -90)
       self.image = pg.transform.rotate(self.image, 90)
+    else:
+      self.vision.image = pg.transform.rotate(self.vision.image, 180)
 
 
   def update(self):
@@ -649,35 +712,33 @@ class Guard(Collider):  ############ guard ############
     self.vision.preY = self.vision.rect.y
     if self.cooldown <= 0:
       if self.hor:
-        if self.turn:
-          if self.rect.x < self.final:
+        if self.cover < self.distance:
+          self.cover += 1
+          if not(self.turn):
             self.pos_float[0] += self.manager.tileSize[0]
             self.rect.x = self.pos_float[0]
             self.vision.rect.midleft = self.rect.center
           else:
-            self.turnSelf()
-        else:
-          if self.rect.x > self.initial:
             self.pos_float[0] -= self.manager.tileSize[0]
             self.rect.x = self.pos_float[0]
             self.vision.rect.midright = self.rect.center
-          else:
-            self.turnSelf()
+        else:
+          self.cover = 0
+          self.turnSelf()
       else:
-        if self.turn:
-          if self.rect.y < self.final:
+        if self.cover < self.distance:
+          self.cover += 1
+          if not(self.turn):
             self.pos_float[1] += self.manager.tileSize[1]
             self.rect.y = self.pos_float[1]
             self.vision.rect.midtop = self.rect.center
           else:
-            self.turnSelf()
-        else:
-          if self.rect.y > self.initial:
             self.pos_float[1] -= self.manager.tileSize[1]
             self.rect.y = self.pos_float[1]
             self.vision.rect.midbottom = self.rect.center
-          else:
-            self.turnSelf()
+        else:
+          self.cover = 0
+          self.turnSelf()
       self.cooldown = self.manager.FPS
     else:
       self.cooldown -= self.windup
@@ -686,19 +747,19 @@ class Guard(Collider):  ############ guard ############
     self.vision.image = pg.transform.rotate(self.vision.image, 180)
     self.image = pg.transform.rotate(self.image, 180)
     if self.hor:
-      if self.turn:
+      if not(self.turn):
         self.vision.rect = self.vision.image.get_rect(midright=self.rect.center)
-        self.turn = False
+        self.turn = True
       else:
         self.vision.rect = self.vision.image.get_rect(midleft=self.rect.center)
-        self.turn = True
-    else:
-      if self.turn:
-        self.vision.rect = self.vision.image.get_rect(midbottom=self.rect.center)
         self.turn = False
+    else:
+      if not(self.turn):
+        self.vision.rect = self.vision.image.get_rect(midbottom=self.rect.center)
+        self.turn = True
       else:
         self.vision.rect = self.vision.image.get_rect(midtop=self.rect.center)
-        self.turn = True
+        self.turn = False
 
   def addSelf(self, manager):
     manager.guard_group.add(self)
@@ -974,6 +1035,7 @@ class Wall(Collider):  ############# wall  ##################
       ]
     else:
       self.image = pg.transform.rotate(self.image, 90)
+      pg.transform.scale(self.image, (manager.tileSize[0], manager.tileSize[1]))
       self.rect = self.image.get_rect()
       self.width = self.rect.width
       self.height = self.rect.height
