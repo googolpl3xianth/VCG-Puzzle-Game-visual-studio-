@@ -37,6 +37,7 @@ class GameManager:  ########## Game manager #########
     self.FPS = FPS
 
     self.sceneIndex = [0, [0, 0]]
+    self.shadow = False
     self.Player = Player
     self.inventoryImage = inventoryImage(self)
     self.wall_group = pg.sprite.Group()
@@ -48,6 +49,7 @@ class GameManager:  ########## Game manager #########
     self.enemy_group = pg.sprite.Group()
     self.collect_group = pg.sprite.Group()
     self.text_group = pg.sprite.Group()
+    self.conveyor_group = pg.sprite.Group()
     self.switch_group = pg.sprite.Group()
     self.switchWall_group = pg.sprite.Group()
     self.kill_shadow = pg.sprite.Group()
@@ -62,6 +64,7 @@ class GameManager:  ########## Game manager #########
     self.enemy_group.empty()
     self.collect_group.empty()
     self.text_group.empty()
+    self.conveyor_group.empty()
     self.switch_group.empty()
     self.switch_group.empty()
     self.switchWall_group.empty()
@@ -69,22 +72,246 @@ class GameManager:  ########## Game manager #########
 
   def checkCollisions(self):
 
+
     collided_switchWalls = pg.sprite.spritecollide(self.Player,
                                                    self.switchWall_group,
                                                    False)
 
     for switchWall in collided_switchWalls:
       if switchWall.on:
-        self.Player.pos_float[0] = round(self.Player.preX)
-        self.Player.pos_float[1] = round(self.Player.preY)
+        self.Player.pos_float[0] = (self.Player.preX)
+        self.Player.pos_float[1] = (self.Player.preY)
         self.Player.rect.x = round(self.Player.pos_float[0])
         self.Player.rect.y = round(self.Player.pos_float[1])
         self.Player.windup = 0
 
 
-    collided_walls = pg.sprite.spritecollide(self.Player, self.wall_group,
-                                             False)
     collided_boxes = pg.sprite.spritecollide(self.Player, self.box_group,
+                                             False)
+
+    for box in collided_boxes: # box * player
+      if self.Player.PShadow == box.shadow or not (self.Player.PShadow):
+        box.pushed = True
+        box.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
+        box.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        
+        self.colliding_box_group.add(box)
+        self.box_group.remove(box)
+
+    boxLoop = True
+    while boxLoop: # box * box
+      for box1 in self.colliding_box_group:
+        box_box = pg.sprite.spritecollide(box1, self.box_group, False)
+        for box2 in box_box:
+            box2.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
+            box2.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
+            box2.rect.x = round(box2.pos_float[0])
+            box2.rect.y = round(box2.pos_float[1])
+
+            self.colliding_box_group.add(box2)
+            self.box_group.remove(box2)
+        if len(box_box) <= 0:
+          boxLoop = False
+      if len(self.colliding_box_group) <= 0:
+        break
+      
+    conveyor_box = pg.sprite.groupcollide(self.box_group, self.conveyor_group, False, False) # conveyor * box
+    for box, conveyors in conveyor_box.items():
+        if len(conveyors) == 1:
+            if not(conveyors[0].on):  
+                conveyors[0].on = True
+            else:
+                conveyors[0].move(box)
+                self.colliding_box_group.add(box)
+                self.box_group.remove(box)
+                if pg.sprite.collide_rect(self.Player, box):
+                    self.Player.alive = False
+        elif len(conveyors) > 1:
+            tempArray = [0, 0]
+            tempArray[0] = box.pos_float[0]
+            tempArray[1] = box.pos_float[1] 
+            for conveyor in conveyors:
+                if not(conveyor.on):  
+                    conveyor.on = True
+                else:
+                    conveyor.move(box)
+                    self.colliding_box_group.add(box)
+                    self.box_group.remove(box)
+            if not(tempArray[0] == box.pos_float[0] and tempArray[1] == box.pos_float[1]):
+                box.pos_float[0] = box.preX
+                box.pos_float[1] = box.preY
+                box.rect.x = box.pos_float[0]
+                box.rect.y = box.pos_float[1]
+    
+    collided_conveyors = pg.sprite.spritecollide(self.Player, self.conveyor_group, False) # conveyor * player
+    if len(collided_conveyors) == 1:
+        for conveyor in collided_conveyors:
+            if not(conveyor.on):  
+                conveyor.on = True
+            else:            
+                conveyor.move(self.Player)
+                collided_boxes = pg.sprite.spritecollide(self.Player, self.box_group,
+                                             False)
+                for box in collided_boxes: # box * player
+                  if self.Player.PShadow == box.shadow or not (self.Player.PShadow):
+                    box.pushed = True
+                    box.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
+                    box.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
+                    box.rect.x = round(box.pos_float[0])
+                    box.rect.y = round(box.pos_float[1])
+        
+                    self.colliding_box_group.add(box)
+                    self.box_group.remove(box)
+                  
+    elif len(collided_conveyors) > 1:
+        tempArray = [0, 0]
+        tempArray[0] = self.Player.pos_float[0]
+        tempArray[1] = self.Player.pos_float[1]
+        for conveyor in collided_conveyors:
+            if not(conveyor.on):  
+                conveyor.on = True
+            else:
+                conveyor.move(self.Player)
+                collided_boxes = pg.sprite.spritecollide(self.Player, self.box_group,
+                                             False)
+                for box in collided_boxes: # box * player
+                  if self.Player.PShadow == box.shadow or not (self.Player.PShadow):
+                    box.pushed = True
+                    box.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
+                    box.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
+                    box.rect.x = round(box.pos_float[0])
+                    box.rect.y = round(box.pos_float[1])
+        
+                    self.colliding_box_group.add(box)
+                    self.box_group.remove(box)
+                  
+        if not(tempArray[0] == self.Player.pos_float[0] and tempArray[1] == self.Player.pos_float[1]):
+           self.Player.pos_float[0] = self.Player.preX
+           self.Player.pos_float[1] = self.Player.preY
+           self.Player.rect.x = self.Player.pos_float[0]
+           self.Player.rect.y = self.Player.pos_float[1]
+           
+    boxLoop = True
+    while boxLoop: # box * box
+      for box1 in self.colliding_box_group:
+        box_box = pg.sprite.spritecollide(box1, self.box_group, False)
+        for box2 in box_box:
+            box2.pos_float[0] += box1.pos_float[0] - box1.preX
+            box2.pos_float[1] += box1.pos_float[1] - box1.preY
+            box2.rect.x = round(box2.pos_float[0])
+            box2.rect.y = round(box2.pos_float[1])
+
+            self.colliding_box_group.add(box2)
+            self.box_group.remove(box2)
+        if len(box_box) <= 0:
+          boxLoop = False
+      if len(self.colliding_box_group) <= 0:
+        break
+
+
+    box_wall_col_group = pg.sprite.groupcollide(self.colliding_box_group,
+                                                self.wall_group, False,
+                                                False)  # box * wall collision
+    
+    if len(box_wall_col_group) > 0:
+      for box, wall in box_wall_col_group.items():
+        box.pos_float[0] = (box.preX)
+        box.pos_float[1] = (box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        if pg.sprite.collide_rect(box, self.Player):
+          self.Player.pos_float[0] = (self.Player.preX)
+          self.Player.pos_float[1] = (self.Player.preY)
+          self.Player.rect.x = round(self.Player.pos_float[0])
+          self.Player.rect.y = round(self.Player.pos_float[1])
+          self.Player.windup = 0
+
+    box_door_col_group = pg.sprite.groupcollide(self.colliding_box_group,
+      self.door_group, False,
+      False)  # box * door collision
+    if len(box_door_col_group) > 0:
+      for box, door in box_door_col_group.items():
+        box.pos_float[0] = (box.preX)
+        box.pos_float[1] = (box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        if box.pushed:
+            self.Player.pos_float[0] = (self.Player.preX)
+            self.Player.pos_float[1] = (self.Player.preY)
+            self.Player.rect.x = round(self.Player.pos_float[0])
+            self.Player.rect.y = round(self.Player.pos_float[1])
+            self.Player.windup = 0
+
+
+    box_switchWall_col_group = pg.sprite.groupcollide(self.colliding_box_group,
+                                                      self.switchWall_group,
+                                                      False, False) # box * switchWall collision
+    for box, switchWall in box_switchWall_col_group.items():
+      if switchWall[0].on:
+        box.pos_float[0] = (box.preX)
+        box.pos_float[1] = (box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        if box.pushed:
+            self.Player.pos_float[0] = (self.Player.preX)
+            self.Player.pos_float[1] = (self.Player.preY)
+            self.Player.rect.x = round(self.Player.pos_float[0])
+            self.Player.rect.y = round(self.Player.pos_float[1])
+            self.Player.windup = 0
+
+       
+    boxLoop = True
+    while boxLoop: # boxes collisions
+      boxLoop = False
+      for box1 in self.colliding_box_group:
+        if box1.preX == box1.pos_float[0] and box1.preY == box1.pos_float[1]:
+            box_box = pg.sprite.spritecollide(box1, self.colliding_box_group, False)
+            for box2 in box_box:
+                if box1 is not box2:
+                  box2.pos_float[0] = box2.preX
+                  box2.pos_float[1] = box2.preY
+                  box2.rect.x = round(box2.pos_float[0])
+                  box2.rect.y = round(box2.pos_float[1])
+                  if box2.pushed:
+                    self.Player.pos_float[0] = self.Player.preX
+                    self.Player.pos_float[1] = self.Player.preY
+                    self.Player.rect.x = round(self.Player.pos_float[0])
+                    self.Player.rect.y = round(self.Player.pos_float[1])
+            if len(box_box) > 1:
+              boxLoop = True
+        else:          
+            box_box = pg.sprite.spritecollide(box1, self.box_group, False)
+            for box2 in box_box:
+                box2.pos_float[0] += box1.pos_float[0] - box1.preX
+                box2.pos_float[1] += box1.pos_float[1] - box1.preY
+                box2.rect.x = round(box2.pos_float[0])
+                box2.rect.y = round(box2.pos_float[1])
+
+                self.colliding_box_group.add(box2)
+                self.box_group.remove(box2)
+            if len(box_box) > 0:
+               boxLoop = True
+             
+      
+    for box in self.colliding_box_group: # box * boundary
+      if box.rect.x < 0 or box.rect.x + box.rect.width > self.screenWidth or box.rect.y < 0 or box.rect.y + box.rect.height > self.screenHeight:
+        box.pos_float[0] = (box.preX)
+        box.pos_float[1] = (box.preY)
+        box.rect.x = round(box.pos_float[0])
+        box.rect.y = round(box.pos_float[1])
+        if box.pushed:
+            self.Player.pos_float[0] = (self.Player.preX)
+            self.Player.pos_float[1] = (self.Player.preY)
+            self.Player.rect.x = round(self.Player.pos_float[0])
+            self.Player.rect.y = round(self.Player.pos_float[1])
+
+      self.box_group.add(box)
+      self.colliding_box_group.remove(box)
+
+
+    collided_walls = pg.sprite.spritecollide(self.Player, self.wall_group,
                                              False)
     if len(collided_walls) > 0 or len(collided_boxes) > 0:
       self.Player.collidingreal = True
@@ -99,114 +326,27 @@ class GameManager:  ########## Game manager #########
 
     for wall in collided_walls:
       if self.Player.PShadow == wall.shadow or not (self.Player.PShadow):
-        self.Player.pos_float[0] = round(self.Player.preX)
-        self.Player.pos_float[1] = round(self.Player.preY)
+        self.Player.pos_float[0] = (self.Player.preX)
+        self.Player.pos_float[1] = (self.Player.preY)
         self.Player.rect.x = round(self.Player.pos_float[0])
         self.Player.rect.y = round(self.Player.pos_float[1])
         self.Player.windup = 0
-
-    for box in collided_boxes:
-      if self.Player.PShadow == box.shadow or not (self.Player.PShadow):
-        box.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
-        box.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
-        box.rect.x = round(box.pos_float[0])
-        box.rect.y = round(box.pos_float[1])
-
-        self.colliding_box_group.add(box)
-        self.box_group.remove(box)
-
-    boxLoop = True
-    while boxLoop:
-      for box1 in self.colliding_box_group:
-        box_box = pg.sprite.spritecollide(box1, self.box_group, False)
-        for box2 in box_box:
-          box2.pos_float[0] += self.Player.pos_float[0] - self.Player.preX
-          box2.pos_float[1] += self.Player.pos_float[1] - self.Player.preY
-          box2.rect.x = round(box2.pos_float[0])
-          box2.rect.y = round(box2.pos_float[1])
-
-          self.colliding_box_group.add(box2)
-          self.box_group.remove(box2)
-        if len(box_box) <= 0:
-          boxLoop = False
-      if len(self.colliding_box_group) <= 0:
-        break
-
-    box_wall_col_group = pg.sprite.groupcollide(self.colliding_box_group,
-                                                self.wall_group, False,
-                                                False)  # box * wall collision
-    if len(box_wall_col_group) > 0:
-      for box in self.colliding_box_group:
-        box.pos_float[0] = round(box.preX) # moving a box
-        box.pos_float[1] = round(box.preY)
-        box.rect.x = round(box.pos_float[0])
-        box.rect.y = round(box.pos_float[1])
-      self.Player.pos_float[0] = round(self.Player.preX)
-      self.Player.pos_float[1] = round(self.Player.preY)
-      self.Player.rect.x = round(self.Player.pos_float[0])
-      self.Player.rect.y = round(self.Player.pos_float[1])
-      self.Player.windup = 0
-
-    box_door_col_group = pg.sprite.groupcollide(self.colliding_box_group,
-      self.door_group, False,
-      False)  # box * door collision
-    if len(box_door_col_group) > 0:
-      for box in self.colliding_box_group:
-        box.pos_float[0] = round(box.preX) # moving a box
-        box.pos_float[1] = round(box.preY)
-        box.rect.x = round(box.pos_float[0])
-        box.rect.y = round(box.pos_float[1])
-        self.Player.pos_float[0] = round(self.Player.preX)
-        self.Player.pos_float[1] = round(self.Player.preY)
-        self.Player.rect.x = round(self.Player.pos_float[0])
-        self.Player.rect.y = round(self.Player.pos_float[1])
-        self.Player.windup = 0
-
-
-    box_switchWall_col_group = pg.sprite.groupcollide(self.colliding_box_group,
-                                                      self.switchWall_group,
-                                                      False, False) # box * switchWall collision
-    for box, switchWall in box_switchWall_col_group.items():
-      if switchWall[0].on:
-        box.pos_float[0] = round(box.preX)
-        box.pos_float[1] = round(box.preY)
-        box.rect.x = round(box.pos_float[0])
-        box.rect.y = round(box.pos_float[1])
-        self.Player.pos_float[0] = round(self.Player.preX)
-        self.Player.pos_float[1] = round(self.Player.preY)
-        self.Player.rect.x = round(self.Player.pos_float[0])
-        self.Player.rect.y = round(self.Player.pos_float[1])
-        self.Player.windup = 0
-
-    for box in self.colliding_box_group:
-      if box.rect.x < 0 or box.rect.x + box.rect.width > self.screenWidth or box.rect.y < 0 or box.rect.y + box.rect.height > self.screenHeight:
-        box.pos_float[0] = round(box.preX)
-        box.pos_float[1] = round(box.preY)
-        box.rect.x = round(box.pos_float[0])
-        box.rect.y = round(box.pos_float[1])
-        self.Player.pos_float[0] = round(self.Player.preX)
-        self.Player.pos_float[1] = round(self.Player.preY)
-        self.Player.rect.x = round(self.Player.pos_float[0])
-        self.Player.rect.y = round(self.Player.pos_float[1])
-
-      self.box_group.add(box)
-      self.colliding_box_group.remove(box)
-
-
+        
     collided_doors = pg.sprite.spritecollide(self.Player, self.door_group,
                                              False) # player * door
     for door in self.door_group:
       door.isOpen = False
     for door in collided_doors:
       door.isOpen = True
-      self.Player.pos_float[0] = round(self.Player.preX)
-      self.Player.pos_float[1] = round(self.Player.preY)
+      self.Player.pos_float[0] = (self.Player.preX)
+      self.Player.pos_float[1] = (self.Player.preY)
       self.Player.rect.x = round(self.Player.pos_float[0])
       self.Player.rect.y = round(self.Player.pos_float[1])
       self.Player.windup = 0
       break
 
-
+      
+    
     for box in self.box_group:
         box_switch = pg.sprite.spritecollide(box, self.switch_group, False) # box * switch
         for switch in box_switch:
@@ -228,7 +368,24 @@ class GameManager:  ########## Game manager #########
     for switch in self.switch_group:
       if switch not in collided_switch and switch.playerColliding == True:
         switch.playerColliding = False
+        
+    conveyor_guard = pg.sprite.groupcollide(self.guard_group, self.conveyor_group, False, False) # conveyor * guard
 
+    for guard, conveyor in conveyor_guard.items():
+        if not(conveyor[0].on):  
+            conveyor[0].on = True
+        else:
+            conveyor[0].move(guard)
+
+    for guard in self.guard_group: # box * boundary
+      if guard.rect.x < 0 or guard.rect.x + guard.rect.width > self.screenWidth or guard.rect.y < 0 or guard.rect.y + guard.rect.height > self.screenHeight:
+        guard.pos_float[0] = guard.preX
+        guard.pos_float[1] = guard.preY
+        guard.rect.x = round(guard.pos_float[0])
+        guard.rect.y = round(guard.pos_float[1])
+        guard.cover = 0
+        guard.turnSelf()
+            
     for guard in self.guard_group:
       guard_box = pg.sprite.spritecollide(guard, self.box_group, False) # guard * box
       if len(guard_box) > 0:
@@ -240,7 +397,7 @@ class GameManager:  ########## Game manager #########
           guard.cover = 0
           guard.turnSelf()
       else:
-        guard_wall = pg.sprite.spritecollide(guard, self.wall_group, False)
+        guard_wall = pg.sprite.spritecollide(guard, self.wall_group, False) # guard * wall
         if len(guard_wall) > 0:
           guard.pos_float[0] = guard.preX
           guard.pos_float[1] = guard.preY
@@ -249,7 +406,7 @@ class GameManager:  ########## Game manager #########
           guard.cover = 0
           guard.turnSelf()
         else:
-          guard_door = pg.sprite.spritecollide(guard, self.door_group, False)
+          guard_door = pg.sprite.spritecollide(guard, self.door_group, False) # guard * door
           if len(guard_door) > 0:
             guard.pos_float[0] = guard.preX
             guard.pos_float[1] = guard.preY
@@ -257,20 +414,57 @@ class GameManager:  ########## Game manager #########
             guard.rect.y = round(guard.pos_float[1])
             guard.cover = 0
             guard.turnSelf()
+          else:
+             guard_switchWall = pg.sprite.spritecollide(guard, self.switchWall_group, False) # guard * switchWall
+             if len(guard_switchWall) > 0:
+                for switchWall in guard_switchWall:
+                   if switchWall.on:
+                      if guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY:
+                          guard.kill()
+                          break
+                      else:
+                          guard.pos_float[0] = guard.preX
+                          guard.pos_float[1] = guard.preY
+                          guard.rect.x = round(guard.pos_float[0])
+                          guard.rect.y = round(guard.pos_float[1])
+                          guard.cover = 0
+                          guard.turnSelf()
+                          break
+             else:
+                guard_switch = pg.sprite.spritecollide(guard, self.switch_group, False) # guard * switch
+                   
+                for switch in guard_switch:
+                    if guard not in switch.guardColliding:
+                        switch.switchValues()
+                        switch.guardColliding.append(guard)
+                for switch in self.switch_group:
+                    if len(guard_switch) <= 0 and guard in switch.guardColliding:
+                        switch.guardColliding.remove(guard)
+                    
 
     collided_enemies = pg.sprite.spritecollide(self.Player, self.enemy_group,
                                                False)
     collided_killShadow = pg.sprite.spritecollide(self.Player,
                                                   self.kill_shadow, False)
-    if len(collided_enemies) > 0 or (len(collided_killShadow) > 0
-                                     and self.Player.PShadow):
+    if len(collided_enemies) > 0:
       self.Player.killed()
+    
+    if (len(collided_killShadow) > 0 and self.Player.PShadow):
+        if not(self.shadow):
+            self.Player.killed()
+        else:
+            self.shadow = not(self.shadow)
 
-    for guard in self.guard_group:
+    for guard in self.guard_group: # guard dies to box
       guard_box = pg.sprite.spritecollide(guard, self.box_group, False)
       if len(guard_box) > 0:
         guard.vision.kill()
         guard.kill()
+
+    for box in self.box_group: # player dies to box
+        if pg.sprite.collide_rect(self.Player, box):
+            if not(box.preX == box.pos_float[0] and box.preY == box.pos_float[1]):
+                self.Player.alive = False
 
     collided_collect = pg.sprite.spritecollide(self.Player, self.collect_group,
                                                False) # collect * player
@@ -278,7 +472,7 @@ class GameManager:  ########## Game manager #########
       collect.collected()
 
     collided_text = pg.sprite.spritecollide(self.Player, self.text_group,
-                                            False)
+                                            False) # player * text
     for text in self.text_group:
       text.colliding = False
     for text in collided_text:
@@ -438,7 +632,10 @@ class Collectible(Collider):  ####### Collectible #########
       screen.blit(self.image, self.rect)
 
   def addSelf(self, manager):
-    manager.collect_group.add(self)
+    if manager.inventoryImage.searchInv(self.name):
+        self.kill()
+    else:
+        manager.collect_group.add(self)
 
 
   def animate(self):
@@ -502,23 +699,23 @@ class Player(Collider):  ############ player ##############
     keys = pg.key.get_pressed()
 
     if not (keys[pg.K_w]) and not (keys[pg.K_a]) and not (
-        keys[pg.K_s]) and not (keys[pg.K_d]):
+        keys[pg.K_s]) and not (keys[pg.K_d]) and not (keys[pg.K_LEFT]) and not (keys[pg.K_RIGHT]) and not (keys[pg.K_UP]) and not (keys[pg.K_DOWN]):
       self.cooldown = 0
 
     if self.cooldown <= 0:
-      if keys[pg.K_a]:
+      if keys[pg.K_a] or keys[pg.K_LEFT]:
         self.direction = "W"
         self.move(-1, 0)
         self.cooldown = self.manager.FPS
-      elif keys[pg.K_d]:
+      elif keys[pg.K_d] or keys[pg.K_RIGHT]:
         self.direction = "E"
         self.move(1, 0)
         self.cooldown = self.manager.FPS
-      elif keys[pg.K_w]:
+      elif keys[pg.K_w] or keys[pg.K_UP]:
         self.direction = "N"
         self.move(0, -1)
         self.cooldown = self.manager.FPS
-      elif keys[pg.K_s]:
+      elif keys[pg.K_s] or keys[pg.K_DOWN]:
         self.direction = "S"
         self.move(0, 1)
         self.cooldown = self.manager.FPS
@@ -528,12 +725,15 @@ class Player(Collider):  ############ player ##############
     else:
       self.cooldown -= self.windup
       self.windup += 1
-      if self.windup > self.manager.FPS / 7:
-        self.windup = self.manager.FPS / 7
-
-    if keys[pg.K_LSHIFT]:
+      if keys[pg.K_LSHIFT]:
+          self.windup = self.manager.FPS / 4
+      else:
+          if self.windup > self.manager.FPS / 7:
+            self.windup = self.manager.FPS / 7
+      
+    if keys[pg.K_SPACE]:
       self.PShadow = True
-    elif keys[pg.K_LSHIFT] is False and not (self.collidingreal):
+    elif keys[pg.K_SPACE] is False and not (self.collidingreal):
       self.PShadow = False
 
     if self.PShadow:
@@ -585,6 +785,9 @@ class Player(Collider):  ############ player ##############
         self.rect.y = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
         self.pos_float[1] = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
 
+  def draw(self, screen):
+    if self.alive:
+        screen.blit(self.image, self.rect)
 
 class text(Collider):  ################ text ###############
 
@@ -649,6 +852,78 @@ class text(Collider):  ################ text ###############
     manager.text_group.add(self)
 
 
+
+class Conveyor(Collider): ############## conveyor ##############
+  def __init__(self, pos, direction, manager, *groups):
+    self.frames = spriteSheet("sprites/Conveyors/conveyorSpriteSheet.png", 32, 32, 4, manager)
+    
+    self.clock = 0
+    self.frameNum = 0
+    
+    self.direction = direction
+    self.on = False
+    self.manager = manager
+    
+    if self.direction == "N":
+        for i in range(len(self.frames)):
+          self.frames[i] = pg.transform.rotate(self.frames[i], 90)
+    elif self.direction == "S":
+        for i in range(len(self.frames)):
+          self.frames[i] = pg.transform.rotate(self.frames[i], -90)
+    elif self.direction == "W":
+        for i in range(len(self.frames)):
+          self.frames[i] = pg.transform.rotate(self.frames[i], 180)
+
+    image = self.frames[0]
+    
+
+    
+    super().__init__(image, pos, manager, True, *groups)
+    
+  def addSelf(self, manager):
+    manager.conveyor_group.add(self)
+
+  def animate(self):
+
+        
+    if not(self.on):
+        self.frameNum = 0
+    else:
+        self.clock += 1
+
+        if self.clock % 10 == 0:
+            self.frameNum += 1
+            if self.frameNum >= len(self.frames):
+              self.clock = 0
+              self.frameNum = 0
+              self.on = False
+          
+    self.image = self.frames[self.frameNum]
+
+  def move(self, collidable):
+      tempArray = [0,0]
+      if self.direction == "N":
+        for frame in self.frames:
+            tempArray = [0, -self.manager.tileSize[1] / 2]
+      elif self.direction == "S":
+        for frame in self.frames:
+            tempArray = [0, self.manager.tileSize[1] / 2]
+      elif self.direction == "W":
+        for frame in self.frames:
+            tempArray = [-self.manager.tileSize[0] / 2, 0]
+      elif self.direction == "E":
+            tempArray = [self.manager.tileSize[0] / 2, 0]
+      else:
+          print("Error, Conveyor direction inputed wrong. direction is: " + str(self.direction) + " should be either N, E, S, or W")
+          raise Exception
+      collidable.preX = collidable.pos_float[0]
+      collidable.preY = collidable.pos_float[1]
+      collidable.pos_float[0] += tempArray[0]
+      collidable.pos_float[1] += tempArray[1]
+      collidable.rect.x = round(collidable.pos_float[0])
+      collidable.rect.y = round(collidable.pos_float[1])
+
+
 class Spike(Collider): ############### spike ###############
 
   def __init__(self, pos, manager, grid=True, *groups):
@@ -683,7 +958,7 @@ class Guard(Collider):  ############ guard ############
                manager,
                hor=True,
                *groups):
-    image = pg.transform.scale(pg.image.load("sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    image = pg.transform.scale(pg.image.load("sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
     self.distance = distance
     self.cover = 0
@@ -691,9 +966,9 @@ class Guard(Collider):  ############ guard ############
     self.hor = hor
     self.turn = False
 
-    self.preX = pos[0] * manager.tileSize[0]
-    self.preY = pos[1] * manager.tileSize[1]
-    self.pos_float = [pos[0] * manager.tileSize[0], pos[1] * manager.tileSize[1]]
+    self.preX = (pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2
+    self.preY = (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2
+    self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2]
 
     self.cooldown = 0
     self.windup = speed
@@ -781,10 +1056,8 @@ class Box(Collider):  ############### box ################
 
   def __init__(self, pos, shadow, manager, *groups):
     if not shadow:
-        boxImage = Image.open("sprites/Boxes/box_moveable.png").crop((90, 100, 400, 410)).save("sprites/Boxes/NewBox.png")
         image = pg.transform.scale(pg.image.load("sprites/Boxes/NewBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     else:
-        boxImage = Image.open("sprites/Boxes/box_unmoveable.png").crop((90, 100, 400, 410)).save("sprites/Boxes/NewSBox.png")
         image = pg.transform.scale(pg.image.load("sprites/Boxes/NewSBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
     self.shadow = shadow
@@ -795,7 +1068,10 @@ class Box(Collider):  ############### box ################
     self.preY = self.rect.y
     self.pos_float = [self.rect.x, self.rect.y]
 
+    self.pushed = False
+
   def update(self):
+    self.pushed = False
     self.preX = self.pos_float[0]
     self.preY = self.pos_float[1]
 
@@ -830,9 +1106,10 @@ class Switch(Collider):  ############ switch #############
 
     super().__init__(image, pos, manager, *groups)
 
-    self.switchWall_group = switchWalls
+    self.switchWall_group = pg.sprite.Group(switchWalls)
     self.playerColliding = False
     self.boxColliding = []
+    self.guardColliding = []
     self.on = False
 
   def addSelf(self, manager):
@@ -948,7 +1225,7 @@ class Door(Collider):  ############# door ###########
 
   def open(self, manager):
     if self.isOpen and manager.inventoryImage.searchInv(self.item):
-      manager.inventoryImage.removeCollect(self.item)
+      #manager.inventoryImage.removeCollect(self.item)
       return True
 
 

@@ -32,7 +32,7 @@ def main():
 def void(gameManager):
   all_sprites = pg.sprite.Group()
   background = spr.Background("sprites/BGs/blackBG.png", gameManager, False)
-  kill_shadow = pg.sprite.Group(spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0], gameManager.screenHeight / gameManager.tileSize[1]), gameManager))
+  kill_shadow = (spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0], gameManager.screenHeight / gameManager.tileSize[1]), gameManager))
   all_sprites.add(background, kill_shadow, gameManager.Player)
 
   scene_void = scn.scene(gameManager, all_sprites)
@@ -58,3 +58,10 @@ if __name__ == "__main__":
 # Press ESC to pause
 # Press R to restart while paused
 # Press G while in menu or when paused then type in the scene index into the console to skip to it
+
+# rule 0: Once you enter the void, there is no return
+# rule 1: As long as there is a physical object, you are anchored to the real world
+# rule 2: A shadow that enters a shadow will become merged with it
+# rule 3: A merged shadow in the real world will cease existing
+# rule 4: A merged shadow in the void will ascend if there is void in the real world  
+# rule 5: Each scene is seperated by 10 rooms  

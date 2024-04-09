@@ -11,16 +11,16 @@ def main(gameManager):  # first scene
 
   background = spr.Background("sprites/BGs/blackBG.png", gameManager)
 
-  door_group = pg.sprite.Group(spr.Door((0, 8), "E", (5, [1, 0]), "key5", gameManager))
+  door_group = (spr.Door((0, 8), "E", (5, [2, 1]), "key5", gameManager))
 
-  text_group = pg.sprite.Group(
+  text_group = (
       spr.text((4, 7), 12, "return to the beginning", gameManager, 1,
                (0, 255, 0)),
       spr.text((4, 5), 12, "there are 2 coins to collect in scene_1 and 2",
                gameManager, 1, (0, 255, 0)),
       spr.text((4, 3), 12, "press esc then g", gameManager, 1, (0, 255, 0)))
 
-  kill_shadow = pg.sprite.Group(
+  kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0],
                      gameManager.screenHeight / gameManager.tileSize[1]),
                      gameManager))

@@ -11,81 +11,57 @@ def main(gameManager):
 
   background = spr.Background("sprites/BGs/edge.png", gameManager)
 
-  wall_group = pg.sprite.Group(spr.Wall((0, 11), False, 22, True, gameManager),
+  wall_group = (spr.Wall((21, .5), True, 2, True, gameManager),
+                               spr.Wall((21, 3.5), True, 3, True, gameManager),
+                               spr.Wall((0, 11), False, 22, True, gameManager),
                                spr.Wall((0, 0), False, 22, True, gameManager),
                                spr.Wall((0, 0), True, 8, True, gameManager),
                                spr.Wall((0, 10), True, 2, True, gameManager),
-                               spr.Wall((21, 0), True, 6, True, gameManager),
-                               spr.Wall((21, 6), False, 1, True, gameManager))
-  door_group = pg.sprite.Group(spr.Door((0, 8), "E", (2, [1, 0]), "key2", gameManager))
-  switchWall_group = pg.sprite.Group(
-      spr.switchWall((5, 2), "green", True, gameManager),
-      spr.switchWall((5, 4), "green", True, gameManager),
-      spr.switchWall((5, 6), "green", True, gameManager),
-      spr.switchWall((5, 8), "green", True, gameManager),
-      spr.switchWall((5, 10), "green", True, gameManager),
-      spr.switchWall((6, 1), "green", False, gameManager),
-      spr.switchWall((6, 3), "green", False, gameManager),
-      spr.switchWall((6, 5), "green", False, gameManager),
-      spr.switchWall((6, 7), "green", False, gameManager),
-      spr.switchWall((6, 9), "green", False, gameManager),
-      spr.switchWall((7, 2), "green", True, gameManager),
-      spr.switchWall((7, 4), "green", True, gameManager),
-      spr.switchWall((7, 6), "green", True, gameManager),
-      spr.switchWall((7, 8), "green", True, gameManager),
-      spr.switchWall((7, 10), "green", True, gameManager),
-      spr.switchWall((8, 1), "green", False, gameManager),
-      spr.switchWall((8, 2), "green", False, gameManager),
-      spr.switchWall((8, 3), "green", False, gameManager),
-      spr.switchWall((8, 4), "green", False, gameManager),
-      spr.switchWall((8, 5), "green", False, gameManager),
-      spr.switchWall((8, 6), "green", False, gameManager),
-      spr.switchWall((8, 7), "green", False, gameManager),
-      spr.switchWall((8, 8), "green", False, gameManager),
-      spr.switchWall((8, 9), "green", False, gameManager),
-      spr.switchWall((8, 10), "green", False, gameManager))
-  switch_group = pg.sprite.Group(
-      spr.Switch((5, 3), "green", switchWall_group, gameManager),
-      spr.Switch((5, 1), "green", switchWall_group, gameManager),
-      spr.Switch((5, 5), "green", switchWall_group, gameManager),
-      spr.Switch((5, 7), "green", switchWall_group, gameManager),
-      spr.Switch((5, 9), "green", switchWall_group, gameManager),
-      spr.Switch((6, 2), "green", switchWall_group, gameManager),
-      spr.Switch((6, 4), "green", switchWall_group, gameManager),
-      spr.Switch((6, 6), "green", switchWall_group, gameManager),
-      spr.Switch((6, 8), "green", switchWall_group, gameManager),
-      spr.Switch((6, 10), "green", switchWall_group, gameManager),
-      spr.Switch((7, 3), "green", switchWall_group, gameManager),
-      spr.Switch((7, 1), "green", switchWall_group, gameManager),
-      spr.Switch((7, 5), "green", switchWall_group, gameManager),
-      spr.Switch((7, 7), "green", switchWall_group, gameManager),
-      spr.Switch((7, 9), "green", switchWall_group, gameManager))
-  if not (gameManager.inventoryImage.searchInv("key3")):
-    collectible_group = pg.sprite.Group(
-        spr.Collectible((10, 9), "key", "key3", gameManager))
-  else:
-    collectible_group = pg.sprite.Group()
+                               spr.Wall((21, 6), False, 1, True, gameManager),
+                               spr.Wall((1, 2), False, 3, True, gameManager),
+                               spr.Wall((2, 4), True, 4, True, gameManager))
+  door_group = (spr.Door((0, 8), "E", (2, [1, 0]), "key2", gameManager))
+  switchWall_group = (
+      spr.switchWall((21, 7), "green", True, gameManager),
+      spr.switchWall((21, 8), "green", True, gameManager),
+      spr.switchWall((21, 9), "green", True, gameManager),
+      spr.switchWall((21, 10), "green", True, gameManager))
+  switch_group = (
+      spr.Switch((1, 1), "green", switchWall_group, gameManager))
+  collectible_group = (
+      spr.Collectible((10, 9), "key", "key3", gameManager))
+  
+  spike_group = (spr.Spike((2,1), gameManager))
+  
+  conveyor_group = (spr.Conveyor((3, 1), "W", gameManager), 
+                    spr.Conveyor((1, 3), "E", gameManager),
+                    spr.Conveyor((1, 5), "N", gameManager),
+                    spr.Conveyor((1, 6), "N", gameManager),
+                    spr.Conveyor((1, 7), "N", gameManager),
+                    spr.Conveyor((15, 10), "N", gameManager))
+  
+  box_group = (spr.Box((2, 3), True, gameManager), spr.Box((3, 10), True, gameManager))
 
-  all_sprites.add(background, wall_group, switchWall_group, switch_group,
+  all_sprites.add(background, wall_group, conveyor_group, switchWall_group, switch_group, spike_group, box_group,
                   collectible_group, gameManager.Player, door_group)
 
   scene_3_a = scn.scene(gameManager, all_sprites, (1,8))
 
   ######################### b #######################
   all_sprites = pg.sprite.Group()
-  wall_group = pg.sprite.Group(spr.Wall((1, 7), True, 2, True, gameManager),
+  wall_group = (spr.Wall((1, 7), True, 2, True, gameManager),
                                spr.Wall((1, 9), False, 7, True, gameManager),
                                spr.Wall((9, 9), False, 12, True, gameManager),
                                spr.Wall((21, 9), True, 2, True, gameManager),
                                spr.Wall((0, 6), False, 22, True, gameManager),
                                spr.Wall((0, 11), False, 22, True, gameManager))
-  door_group = pg.sprite.Group(spr.Door((21, 7), "W", (4, [0, 1]), "key3", gameManager))
+  door_group = (spr.Door((21, 7), "W", (4, [0, 3]), "key3", gameManager))
 
-  GSwitchWall_group = pg.sprite.Group(
+  GSwitchWall_group = (
       spr.switchWall((9, 7), "green", True, gameManager),
       spr.switchWall((9, 8), "green", True, gameManager),
       spr.switchWall((7, 10), "green", False, gameManager))
-  GSwitch_group = pg.sprite.Group(
+  GSwitch_group = (
       spr.Switch((8, 10), "green", GSwitchWall_group, gameManager),
       spr.Switch((9, 10), "green", GSwitchWall_group, gameManager),
       spr.Switch((10, 10), "green", GSwitchWall_group, gameManager),
@@ -99,21 +75,78 @@ def main(gameManager):
       spr.Switch((18, 10), "green", GSwitchWall_group, gameManager),
       spr.Switch((19, 10), "green", GSwitchWall_group, gameManager),
       spr.Switch((20, 10), "green", GSwitchWall_group, gameManager))
-  BSwitchWall_group = pg.sprite.Group(
+  BSwitchWall_group = (
       spr.switchWall((8, 8), "blue", False, gameManager))
-  BSwitch_group = pg.sprite.Group(
+  BSwitch_group = (
       spr.Switch((8, 9), "blue", BSwitchWall_group, gameManager))
 
-  kill_shadow = pg.sprite.Group(
+  kill_shadow = (
       spr.killShadow(
           (0, 0, gameManager.screenWidth / gameManager.tileSize[0], 6),
           gameManager))
-  all_sprites.add(background, wall_group, GSwitchWall_group, BSwitchWall_group,
-                  GSwitch_group, BSwitch_group, kill_shadow,
+  
+  conveyor = (spr.Conveyor((21, 4), "E", gameManager), spr.Conveyor((20, 3), "S", gameManager))
+  
+  all_sprites.add(background, wall_group, kill_shadow, conveyor, GSwitchWall_group, BSwitchWall_group,
+                  GSwitch_group, BSwitch_group,
                   gameManager.Player, door_group)
 
   scene_3_b = scn.scene(gameManager, all_sprites, (0, 10))
+  
+    ##################### c ########################
+  all_sprites = pg.sprite.Group()
 
-  sceneParts = [[scene_3_a], [scene_3_b]]
+  background = spr.Background("sprites/BGs/edge.png", gameManager)
+
+  wall_group = (spr.Wall((21, 0), True, 12, True, gameManager),
+                spr.Wall((0, 11), False, 22, True, gameManager),
+                spr.Wall((0, 0), False, 22, True, gameManager),
+                spr.Wall((0, 3), False, 4, True, gameManager),
+                spr.Wall((0, 5), False, 4, True, gameManager),
+                spr.Wall((3, 6), True, 2, True, gameManager),
+                spr.Wall((3, 1), True, 2, True, gameManager),
+                spr.Wall((5, 6), True, 3, True, gameManager),
+                spr.Wall((5, 1), True, 2, True, gameManager),
+                spr.Wall((5, 3), False, 4, True, gameManager),
+                spr.Wall((5, 5), False, 4, True, gameManager),
+                spr.Wall((10, 1), True, 6, True, gameManager),
+                spr.Wall((10, 7), False, 1, True, gameManager),
+                spr.Wall((11, 7), True, 2, True, gameManager),
+                spr.Wall((11, 9), False, 4, True, gameManager),
+                spr.Wall((0, 7), True, 3, True, gameManager),
+                spr.Wall((8, 6), True, 1, True, gameManager))
+
+  RSwitchWall_group = (
+      spr.switchWall((6, 4), "red", False, gameManager),
+      spr.switchWall((8, 4), "red", False, gameManager))
+  BSwitchWall_group = (
+      spr.switchWall((4, 7), "blue", False, gameManager),
+      spr.switchWall((9, 2), "blue", True, gameManager),
+      spr.switchWall((9, 6), "blue", False, gameManager))
+  GSwitchWall_group = (
+      spr.switchWall((5, 9), "green", True, gameManager),
+      spr.switchWall((5, 10), "green", True, gameManager),
+      spr.switchWall((11, 10), "green", True, gameManager),
+      spr.switchWall((13, 10), "green", True, gameManager))
+  switch_group = (
+      spr.Switch((7, 4), "red", RSwitchWall_group, gameManager),
+      spr.Switch((4, 1), "blue", BSwitchWall_group, gameManager),
+      spr.Switch((6, 7), "green", GSwitchWall_group, gameManager),
+      spr.Switch((12, 10), "green", GSwitchWall_group, gameManager))
+  
+  box_group = (spr.Box((4, 2), False, gameManager), 
+               spr.Box((4, 6), False, gameManager), 
+               spr.Box((15, 6), False, gameManager), 
+               spr.Box((8, 2), True, gameManager))
+  
+  collectible_group = (
+      spr.Collectible((18, 5), "coin", "coin3", gameManager))
+
+  all_sprites.add(background, wall_group, RSwitchWall_group, BSwitchWall_group, GSwitchWall_group, switch_group, box_group, collectible_group,
+                  gameManager.Player)
+
+  scene_3_c = scn.scene(gameManager, all_sprites, (1,8))
+
+  sceneParts = [[scene_3_a], [scene_3_b], [scene_3_c]]
 
   return scn.gameLoop(gameManager, sceneParts, [0, 0])

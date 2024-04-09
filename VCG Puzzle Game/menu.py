@@ -51,15 +51,19 @@ def main(gameManager):  # starting scene
 
     keys = pg.key.get_pressed()
     if keys[pg.K_g]:
-        scene = input("What scene? (1, 2, 3, ...) \n")
-        partX = input("What grid? (x) \n")
-        partY = input("What grid? (y) \n")
+        while True:
+            try:
+                scene = input("What scene? (1, 2, 3, ...) \n")
+                partX = input("What grid? (x) \n")
+                partY = input("What grid? (y) \n")
 
-        gameManager.clearLevel()
-        gameManager.sceneIndex[0] = int(scene)
-        gameManager.sceneIndex[1][0] = int(partX)
-        gameManager.sceneIndex[1][1] = int(partY)
-        return None
+                gameManager.clearLevel()
+                gameManager.sceneIndex[0] = int(scene)
+                gameManager.sceneIndex[1][0] = int(partX)
+                gameManager.sceneIndex[1][1] = int(partY)
+                return None
+            except:
+              pass
 
     if menu:
       keys = pg.key.get_pressed()

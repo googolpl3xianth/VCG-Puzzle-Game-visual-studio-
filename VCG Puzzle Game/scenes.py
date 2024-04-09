@@ -9,56 +9,74 @@ class scene:
 
   def __init__(self, gameManager, all_sprites, playerPos=(0,0), blank=False, *groups):
     pg.init()
-
-    if grid:
-      self.grid = spr.Grid(gameManager)
-
     self.blank = blank
-
-    self.playerPos = playerPos
-
-    self.gameManager = gameManager
-
     self.shadowSpawn = []
+    if not blank:
+        if grid:
+          self.grid = spr.Grid(gameManager)
 
-    for sprite in all_sprites:
-      sprite.addSelf(self.gameManager)
+    
 
-    for killShadow in self.gameManager.kill_shadow:
-      self.shadowSpawn.append(killShadow.rect)
+        self.playerPos = playerPos
 
-    self.gameManager.clearLevel()
+        self.gameManager = gameManager
 
-    self.screen = gameManager.screen
-    self.surface = pg.Surface(
-        (gameManager.screenWidth, gameManager.screenHeight), pg.SRCALPHA)
-    self.clock = pg.time.Clock()
+        for sprite in all_sprites:
+          sprite.addSelf(self.gameManager)
 
-    gameManager.Player.alive = True
+        for killShadow in self.gameManager.kill_shadow:
+          self.shadowSpawn.append(killShadow.rect)
 
-    font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
-    pausedText = font.render("Paused", True, (0, 0, 0))
-    font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 3 / 4))
-    restartText = font.render("Press r to restart", True, (0, 0, 0))
+        self.gameManager.clearLevel()
 
-    self.menuText = pg.sprite.Group(
-        spr.Sprite(pausedText, (gameManager.screenWidth // 2,
-                   gameManager.screenHeight // 2), self.gameManager,
-                   False, *groups),
-        spr.Sprite(
-            restartText,
-            (gameManager.screenWidth // 2,
-            gameManager.screenHeight // 2 + int(gameManager.tileSize[1])),
-            self.gameManager,
-            False,
-        ))
+        self.screen = gameManager.screen
+        self.surface = pg.Surface(
+            (gameManager.screenWidth, gameManager.screenHeight), pg.SRCALPHA)
+        self.clock = pg.time.Clock()
 
-    self.all_sprites = pg.sprite.Group()
+        gameManager.Player.alive = True
 
-    for group in all_sprites:
-      if group is not (None):
-        self.all_sprites.add(pg.sprite.Group(group))
-    self.all_sprites.add(pg.sprite.Group(gameManager.inventoryImage))
+        font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
+        pausedText = font.render("Paused", True, (0, 0, 0))
+        font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 3 / 4))
+        restartText = font.render("Press r to restart", True, (0, 0, 0))
+        
+        font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
+        deadText = font.render("You Died", True, (255, 0, 0))
+        font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 3 / 4))
+        returnText = font.render("Press r to restart", True, (255, 0, 0))
+        
+
+        self.menuText = pg.sprite.Group(
+            spr.Sprite(pausedText, (gameManager.screenWidth // 2,
+                       gameManager.screenHeight // 2), self.gameManager,
+                       False, *groups),
+            spr.Sprite(
+                restartText,
+                (gameManager.screenWidth // 2,
+                gameManager.screenHeight // 2 + int(gameManager.tileSize[1])),
+                self.gameManager,
+                False,
+            ))
+        
+        self.deadText = pg.sprite.Group(
+            spr.Sprite(deadText, (gameManager.screenWidth // 2,
+                       gameManager.screenHeight // 2), self.gameManager,
+                       False, *groups),
+            spr.Sprite(
+                returnText,
+                (gameManager.screenWidth // 2,
+                gameManager.screenHeight // 2 + int(gameManager.tileSize[1])),
+                self.gameManager,
+                False,
+            ))
+
+        self.all_sprites = pg.sprite.Group()
+
+        for group in all_sprites:
+          if group is not (None):
+            self.all_sprites.add(pg.sprite.Group(group))
+        self.all_sprites.add(pg.sprite.Group(gameManager.inventoryImage))
 
   def main(self):
     if self.blank:
@@ -68,8 +86,9 @@ class scene:
       sprite.addSelf(self.gameManager)
     
 
-
+    tempShadow = self.gameManager.shadow
     menu = False
+    restart = False
     returnValue = None
     transparency = 255
     while True:
@@ -83,24 +102,24 @@ class scene:
             menu = not (menu)
 
       pg.event.pump()
-      if not (menu) and returnValue is None:
+      if not (menu) and returnValue is None and self.gameManager.Player.alive:
         self.all_sprites.update()
-        if self.gameManager.Player.rect.x > self.gameManager.screenWidth - self.gameManager.Player.rect.width:
+        if self.gameManager.Player.rect.x > self.gameManager.screenWidth - self.gameManager.Player.rect.width: ###### player changing rooms ###########
           returnValue = [1, 0]
-        elif self.gameManager.Player.rect.x < 0:
+        elif self.gameManager.Player.rect.x + self.gameManager.Player.rect.width < 0:
           returnValue = [-1, 0]
         elif self.gameManager.Player.rect.y > self.gameManager.screenHeight - self.gameManager.Player.rect.height:
           returnValue = [0, 1]
-        elif self.gameManager.Player.rect.y < 0:
+        elif self.gameManager.Player.rect.y + self.gameManager.Player.rect.height < 0:
           returnValue = [0, -1]
         self.gameManager.checkCollisions()
-      for door in self.gameManager.door_group:
+      for door in self.gameManager.door_group: ############## check if player is going through a door ################
         if door.open(self.gameManager):
           self.gameManager.Player.setPos(door.playerPos[0], door.playerPos[1])
           returnValue = door.returnIndex
           self.gameManager.sceneIndex = door.returnIndex
           return None
-      for sprite in self.all_sprites:
+      for sprite in self.all_sprites: ################ draws each sprite
         if not (menu) and returnValue is None:
           sprite.animate()
         sprite.draw(self.screen)
@@ -117,6 +136,7 @@ class scene:
         keys = pg.key.get_pressed()
         if keys[pg.K_r]:
           self.gameManager.Player.alive = False
+          restart = True
         if keys[pg.K_g]:
             scene = input("What scene? (1, 2, 3, ...) \n")
             partX = input("What grid? (x) \n")
@@ -133,11 +153,22 @@ class scene:
         ])
         self.menuText.draw(self.screen)
 
-      if not (self.gameManager.Player.alive):
-        self.gameManager.clearLevel()
-        self.gameManager.Player.alive = True
-        self.gameManager.Player.setPos(self.playerPos[0], self.playerPos[1])
-        return self.gameManager.sceneIndex
+      if not (self.gameManager.Player.alive): ########### if player dies ###############
+        keys = pg.key.get_pressed()
+        if keys[pg.K_r] or restart:
+            restart = False
+            self.gameManager.clearLevel()
+            self.gameManager.Player.alive = True
+            self.gameManager.Player.setPos(self.playerPos[0], self.playerPos[1])
+            return self.gameManager.sceneIndex
+        self.screen.blit(self.surface, (0, 0))
+        pg.draw.rect(self.surface, (0, 0, 0, 100), [
+            0, 0, self.gameManager.screenWidth, self.gameManager.screenHeight
+        ])
+        self.deadText.draw(self.screen)
+        
+      if tempShadow != self.gameManager.shadow:
+        return "shadow"
 
       if returnValue is None and transparency > 0:
         transparency -= 10
@@ -150,13 +181,13 @@ class scene:
       elif returnValue is not (None) and transparency == 255:
         self.gameManager.clearLevel()
         if returnValue == [0, -1]:
-          self.gameManager.Player.setPos(None, (self.gameManager.screenHeight / self.gameManager.tileSize[1]) - 1)
+          self.gameManager.Player.setPos(None, (self.gameManager.Player.rect.center[1] / self.gameManager.tileSize[1] - .5 + self.gameManager.screenHeight / self.gameManager.tileSize[1]))
         elif returnValue == [1, 0]:
-          self.gameManager.Player.setPos(0, None)
+          self.gameManager.Player.setPos((self.gameManager.Player.rect.center[0] / self.gameManager.tileSize[0] - .5 - self.gameManager.screenWidth / self.gameManager.tileSize[0]), None)
         elif returnValue == [0, 1]:
-          self.gameManager.Player.setPos(None, 0)
+          self.gameManager.Player.setPos(None, (self.gameManager.Player.rect.center[1] / self.gameManager.tileSize[1] - .5 - self.gameManager.screenHeight / self.gameManager.tileSize[1]))
         elif returnValue == [-1, 0]:
-          self.gameManager.Player.setPos((self.gameManager.screenWidth / self.gameManager.tileSize[0]) - 1, None)
+          self.gameManager.Player.setPos((self.gameManager.Player.rect.center[0] / self.gameManager.tileSize[0] - .5 + self.gameManager.screenWidth / self.gameManager.tileSize[0]), None)
         return returnValue
 
       pg.display.flip()
@@ -171,30 +202,18 @@ def gameLoop(gameManager, scenes, start=[0,0]):
   ################ void #################
   all_sprites = pg.sprite.Group()
   background = spr.Background("sprites/BGs/blackBG.png", gameManager)
-  kill_shadow = pg.sprite.Group(
+  kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth // gameManager.tileSize[0],
                      gameManager.screenHeight // gameManager.tileSize[1]),
                      gameManager))
 
   all_sprites.add(background, kill_shadow, gameManager.Player)
 
-  if not(gameManager.sceneIndex[0] == 5):
-    font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
-    WIPFont1 = font.render("Work in progress, ignore this place", True,
-                           (255, 255, 255))
-    WIPFont2 = font.render("press shift to return", True, (255, 255, 255))
-    WIPText = pg.sprite.Group(
-        spr.Sprite(WIPFont1, (gameManager.screenWidth // 2,
-                   gameManager.screenHeight // 2), gameManager, False),
-        spr.Sprite(WIPFont2, (gameManager.screenWidth // 2,
-                   gameManager.screenHeight // 2 + int(gameManager.tileSize[1])), gameManager, False))
-    all_sprites.add(WIPText)
-
   scene_void = scene(gameManager, all_sprites)
 
   ################# voidEnd #################
   all_sprites = pg.sprite.Group()
-  kill_shadow = pg.sprite.Group(
+  kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth // gameManager.tileSize[0],
                      gameManager.screenHeight // gameManager.tileSize[1]),
                      gameManager))
@@ -236,18 +255,21 @@ def gameLoop(gameManager, scenes, start=[0,0]):
       else:
         temp = scene_void.main()
       try:
-        shadowIndex[0] += temp[0]
         shadowIndex[1] += temp[1]
+        shadowIndex[0] += temp[0]
         shadowTimer += 1
       except TypeError:
         try:
-          print("yep")
+          switch = False
           for shadowRect in sceneParts[shadowIndex[0]][shadowIndex[1]].shadowSpawn:
             if shadowRect.colliderect(gameManager.Player.rect):
               gameManager.sceneIndex[1][0] = shadowIndex[0]
               gameManager.sceneIndex[1][1] = shadowIndex[1]
+              switch = True
               break
-        except:
+          if not(switch):
+            raise IndexError  
+        except IndexError or AttributeError:
           gameManager.sceneIndex[1][0] = tempArray[0]
           gameManager.sceneIndex[1][1] = tempArray[1]
           tempPos = sceneParts[gameManager.sceneIndex[1][0]][gameManager.sceneIndex[1][1]].playerPos
