@@ -9,7 +9,7 @@ def main(gameManager):
   pg.display.set_caption('scene_4')
   ##################### a ########################
   all_sprites = pg.sprite.Group()
-
+  cage = spr.Cage((2, 2), gameManager)
   background = spr.Background("sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((4, 1), True, 5, True, gameManager),
@@ -21,9 +21,9 @@ def main(gameManager):
                                spr.Wall((0, 11), False, 22, True, gameManager),
                                spr.Wall((0, 0), False, 5, True, gameManager),
                                spr.Wall((10, 0), False, 12, True, gameManager),
-                               spr.Wall((0, 0), True, 8, True, gameManager),
-                               spr.Wall((0, 10), True, 2, True, gameManager))
-  door_group = (spr.Door((0, 8), "E", (3, [1, 0]), "key3", gameManager))
+                               spr.Wall((0, 0), True, 7, True, gameManager),
+                               spr.Wall((0, 9), True, 3, True, gameManager))
+  door_group = (spr.Door((0, 7), "E", (3, [1, 0]), "key3", gameManager))
 
   kill_shadow = (spr.killShadow((7, 6, 1, 1), gameManager))
 
@@ -31,12 +31,13 @@ def main(gameManager):
       spr.Collectible((7, 2), "key", "key4", gameManager))
 
   all_sprites.add(background, wall_group, collectible_group, kill_shadow,
-                  gameManager.Player, door_group)
+                  gameManager.Player, door_group, cage)
 
-  scene_4_a = scn.scene(gameManager, all_sprites, (1, 8))
+  scene_4_a = scn.scene(gameManager, all_sprites)
 
   ######################### b #######################
   all_sprites = pg.sprite.Group()
+  cage = spr.Cage((0, 10), gameManager)
   wall_group = (spr.Wall((0, 6), False, 21, False, gameManager),
                                spr.Wall((1, 7), False, 20, True, gameManager),
                                spr.Wall((1, 9), False, 15, True, gameManager),
@@ -49,9 +50,9 @@ def main(gameManager):
   gaurd = (spr.Guard((3, 8), 15, 7, gameManager))
   box_group = (spr.Box((1, 8), False, gameManager))
 
-  all_sprites.add(background, wall_group, gaurd, box_group, gameManager.Player, door_group)
+  all_sprites.add(background, wall_group, gaurd, box_group, gameManager.Player, door_group, cage)
 
-  scene_4_b = scn.scene(gameManager, all_sprites, (0, 9))
+  scene_4_b = scn.scene(gameManager, all_sprites)
 
   ############# c #######################
   all_sprites = pg.sprite.Group()
@@ -133,6 +134,7 @@ def main(gameManager):
   
   ######################### coin #######################
   all_sprites = pg.sprite.Group()
+  cage = spr.Cage((0, 7), gameManager)
   wall_group = (spr.Wall((0, 11), False, 22, True, gameManager),
                 spr.Wall((0, 0), False, 22, True, gameManager),
                 spr.Wall((21, 0), True, 12, True, gameManager),
@@ -147,24 +149,31 @@ def main(gameManager):
                     spr.Conveyor((0, 3), "N", gameManager),
                     spr.Conveyor((0, 2), "N", gameManager))
   guard = spr.Guard((3, 7), 5, 5, gameManager)
-  RSwitchWall_group = (spr.switchWall((19, 8), "red", True, gameManager))
-  GSwitchWall_group = (spr.switchWall((13, 4), "green", True, gameManager),
+  RSwitchWall_group = [spr.switchWall((19, 8), "red", True, gameManager),
+                       spr.switchWall((1, 9), "red", True, gameManager),
+                       spr.switchWall((1, 10), "red", True, gameManager),
+                       spr.switchWall((5, 9), "red", False, gameManager),
+                       spr.switchWall((5, 10), "red", False, gameManager),
+                       spr.switchWall((1, 7), "red", False, gameManager)]
+  GSwitchWall_group = [spr.switchWall((13, 4), "green", True, gameManager),
                        spr.switchWall((3, 1), "green", True, gameManager),
                        spr.switchWall((6, 1), "green", True, gameManager),
                        spr.switchWall((9, 4), "green", True, gameManager),
-                       spr.switchWall((13, 1), "green", True, gameManager))
-  BSwitchWall_group = (spr.switchWall((15, 4), "blue", True, gameManager),
+                       spr.switchWall((13, 1), "green", True, gameManager)]
+  BSwitchWall_group = [spr.switchWall((15, 4), "blue", True, gameManager),
                        spr.switchWall((8, 4), "blue", True, gameManager),
                        spr.switchWall((4, 4), "blue", True, gameManager),
                        spr.switchWall((10, 1), "blue", True, gameManager),
-                       spr.switchWall((16, 1), "blue", True, gameManager))
-  switch_group = (spr.Switch((20, 1), "red", RSwitchWall_group, gameManager),
-                  spr.Switch((15, 7), "green", GSwitchWall_group, gameManager),
-                  spr.Switch((16, 7), "blue", BSwitchWall_group, gameManager))
+                       spr.switchWall((16, 1), "blue", True, gameManager)]
+  switch_group = (spr.Switch((20, 1), RSwitchWall_group, gameManager),
+                  spr.Switch((15, 7), GSwitchWall_group, gameManager),
+                  spr.Switch((16, 7), BSwitchWall_group, gameManager))
 
   
-  all_sprites.add(background, wall_group, conveyor_group, RSwitchWall_group, GSwitchWall_group, BSwitchWall_group, switch_group, box_group, gameManager.Player, guard, coin)
-  scene_4_coin = scn.scene(gameManager, all_sprites, (0, 7))
+  all_sprites.add(background, wall_group, conveyor_group, RSwitchWall_group, 
+                  GSwitchWall_group, BSwitchWall_group, switch_group, 
+                  box_group, gameManager.Player, guard, coin, cage)
+  scene_4_coin = scn.scene(gameManager, all_sprites)
 
   blankScene = scn.scene(gameManager, pg.sprite.Group(), (0, 0), True)
   

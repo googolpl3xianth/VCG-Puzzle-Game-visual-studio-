@@ -1,23 +1,19 @@
+from http.client import NETWORK_AUTHENTICATION_REQUIRED
 from sys import exit
 from PIL import Image
 import pygame as pg
 import sprites as spr
 
-grid = False
-
 class scene:
 
-  def __init__(self, gameManager, all_sprites, playerPos=(0,0), blank=False, *groups):
+  def __init__(self, gameManager, all_sprites, blank=False, *groups):
     pg.init()
     self.blank = blank
     self.shadowSpawn = []
+    self.cage = None
     if not blank:
-        if grid:
+        if gameManager.devMode:
           self.grid = spr.Grid(gameManager)
-
-    
-
-        self.playerPos = playerPos
 
         self.gameManager = gameManager
 
@@ -26,6 +22,8 @@ class scene:
 
         for killShadow in self.gameManager.kill_shadow:
           self.shadowSpawn.append(killShadow.rect)
+          
+        self.cage = self.gameManager.cage
 
         self.gameManager.clearLevel()
 
@@ -38,8 +36,6 @@ class scene:
 
         font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
         pausedText = font.render("Paused", True, (0, 0, 0))
-        font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 3 / 4))
-        restartText = font.render("Press r to restart", True, (0, 0, 0))
         
         font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
         deadText = font.render("You Died", True, (255, 0, 0))
@@ -50,14 +46,7 @@ class scene:
         self.menuText = pg.sprite.Group(
             spr.Sprite(pausedText, (gameManager.screenWidth // 2,
                        gameManager.screenHeight // 2), self.gameManager,
-                       False, *groups),
-            spr.Sprite(
-                restartText,
-                (gameManager.screenWidth // 2,
-                gameManager.screenHeight // 2 + int(gameManager.tileSize[1])),
-                self.gameManager,
-                False,
-            ))
+                       False, *groups))
         
         self.deadText = pg.sprite.Group(
             spr.Sprite(deadText, (gameManager.screenWidth // 2,
@@ -79,12 +68,14 @@ class scene:
         self.all_sprites.add(pg.sprite.Group(gameManager.inventoryImage))
 
   def main(self):
+    
     if self.blank:
       raise IndexError
+  
+    self.gameManager.clearLevel()
 
     for sprite in self.all_sprites:
       sprite.addSelf(self.gameManager)
-    
 
     tempShadow = self.gameManager.shadow
     menu = False
@@ -98,11 +89,14 @@ class scene:
           pg.quit()
           exit()
         elif event.type == pg.KEYDOWN:
-          if event.key == pg.K_ESCAPE:
+          if event.key == pg.K_ESCAPE and self.gameManager.Player.alive:
             menu = not (menu)
-
+          if event.key == pg.K_r:
+              self.gameManager.Player.alive = False
+              restart = True
+            
       pg.event.pump()
-      if not (menu) and returnValue is None and self.gameManager.Player.alive:
+      if transparency == 0 and not (menu) and returnValue is None and self.gameManager.Player.alive:
         self.all_sprites.update()
         if self.gameManager.Player.rect.x > self.gameManager.screenWidth - self.gameManager.Player.rect.width: ###### player changing rooms ###########
           returnValue = [1, 0]
@@ -119,12 +113,13 @@ class scene:
           returnValue = door.returnIndex
           self.gameManager.sceneIndex = door.returnIndex
           return None
-      for sprite in self.all_sprites: ################ draws each sprite
+      for sprite in self.all_sprites: ################ draws each sprite #######
         if not (menu) and returnValue is None:
           sprite.animate()
         sprite.draw(self.screen)
 
-      if grid:
+      if self.gameManager.devMode: ############# devMode ################
+        self.grid.update()
         self.grid.draw(self.screen)
 
       self.screen.blit(self.surface, (0, 0))
@@ -134,18 +129,20 @@ class scene:
 
       if menu and returnValue is None:
         keys = pg.key.get_pressed()
-        if keys[pg.K_r]:
-          self.gameManager.Player.alive = False
-          restart = True
-        if keys[pg.K_g]:
-            scene = input("What scene? (1, 2, 3, ...) \n")
-            partX = input("What grid? (x) \n")
-            partY = input("What grid? (y) \n")
+        if keys[pg.K_t] and self.gameManager.devMode:
+            while True:
+                try:
+                    scene = input("What scene? (1, 2, 3, ...) \n")
+                    partX = input("What grid? (x) \n")
+                    partY = input("What grid? (y) \n")
 
-            self.gameManager.clearLevel()
-            self.gameManager.sceneIndex[0] = int(scene)
-            self.gameManager.sceneIndex[1][0] = int(partX)
-            self.gameManager.sceneIndex[1][1] = int(partY)
+                    self.gameManager.clearLevel()
+                    self.gameManager.sceneIndex[0] = int(scene)
+                    self.gameManager.sceneIndex[1][0] = int(partX)
+                    self.gameManager.sceneIndex[1][1] = int(partY)
+                    return None
+                except:
+                  pass
             return None
         self.screen.blit(self.surface, (0, 0))
         pg.draw.rect(self.surface, (0, 0, 0, 100), [
@@ -157,17 +154,25 @@ class scene:
         keys = pg.key.get_pressed()
         if keys[pg.K_r] or restart:
             restart = False
-            self.gameManager.clearLevel()
-            self.gameManager.Player.alive = True
-            self.gameManager.Player.setPos(self.playerPos[0], self.playerPos[1])
-            return self.gameManager.sceneIndex
+            if not(self.gameManager.shadow):
+                self.gameManager.Player.alive = True
+                if self.gameManager.cage is not None:
+                    self.gameManager.Player.setPos(self.gameManager.cage.pos[0], self.gameManager.cage.pos[1])
+                else:
+                    self.gameManager.Player.setPos(0, 0)
+                self.gameManager.clearLevel()
+                return None
+            else:
+              self.gameManager.Player.alive = True
+              self.gameManager.clearLevel()
+              return "reset"
         self.screen.blit(self.surface, (0, 0))
         pg.draw.rect(self.surface, (0, 0, 0, 100), [
             0, 0, self.gameManager.screenWidth, self.gameManager.screenHeight
         ])
         self.deadText.draw(self.screen)
         
-      if tempShadow != self.gameManager.shadow:
+      if tempShadow != self.gameManager.shadow: ############### switchVoid ###########
         return "shadow"
 
       if returnValue is None and transparency > 0:
@@ -223,9 +228,17 @@ def gameLoop(gameManager, scenes, start=[0,0]):
   if gameManager.sceneIndex[0] == 5:
     mapImage = Image.open(
       "sprites/Maps/map5.png")
-    mapImage.thumbnail((gameManager.tileSize[0] * 3, gameManager.tileSize[1] * 3))
+    mapImage.thumbnail((gameManager.tileSize[0] * 8, gameManager.tileSize[1] * 8))
     mapImage.save("sprites/Maps/NMap5.png")
     map = spr.Sprite(pg.image.load("sprites/Maps/NMap5.png"), (gameManager.screenWidth // 2,
+    gameManager.screenHeight // 2), gameManager, False)
+    all_sprites.add(map)
+  elif gameManager.sceneIndex[0] == 4:
+    mapImage = Image.open(
+      "sprites/Maps/map4.png")
+    mapImage.thumbnail((gameManager.tileSize[0] * 8, gameManager.tileSize[1] * 8))
+    mapImage.save("sprites/Maps/NMap4.png")
+    map = spr.Sprite(pg.image.load("sprites/Maps/NMap4.png"), (gameManager.screenWidth // 2,
     gameManager.screenHeight // 2), gameManager, False)
     all_sprites.add(map)
   all_sprites.add(gameManager.Player)
@@ -233,8 +246,8 @@ def gameLoop(gameManager, scenes, start=[0,0]):
 
   sceneParts = scenes
   shadowIndex = [0, 0]
-  shadowIndex[0] = start[0]
-  shadowIndex[1] = start[1]
+  shadowIndex[0] = gameManager.sceneIndex[1][0]
+  shadowIndex[1] = gameManager.sceneIndex[1][1]
   shadowTimer = 1
 
   while True:
@@ -242,35 +255,59 @@ def gameLoop(gameManager, scenes, start=[0,0]):
       if gameManager.sceneIndex[1][0] < 0 or gameManager.sceneIndex[1][1] < 0:
           raise IndexError
       temp = sceneParts[gameManager.sceneIndex[1][0]][gameManager.sceneIndex[1][1]].main()
+      if temp is None:
+        return None
       try:
         gameManager.sceneIndex[1][1] += temp[1]
         gameManager.sceneIndex[1][0] += temp[0]
         shadowIndex[1] = gameManager.sceneIndex[1][1]
         shadowIndex[0] = gameManager.sceneIndex[1][0]
+        gameManager.shadow = False
       except TypeError:
-        return None
+        if temp == "shadow":
+            gameManager.shadow = True
+        raise IndexError
     except IndexError:
+      gameManager.sceneIndex[1][0] = -1
+      gameManager.sceneIndex[1][1] = -1
       if shadowTimer % 10 == 0:
         temp = voidEnd.main()
       else:
         temp = scene_void.main()
-      try:
-        shadowIndex[1] += temp[1]
-        shadowIndex[0] += temp[0]
-        shadowTimer += 1
-      except TypeError:
-        try:
-          switch = False
-          for shadowRect in sceneParts[shadowIndex[0]][shadowIndex[1]].shadowSpawn:
-            if shadowRect.colliderect(gameManager.Player.rect):
-              gameManager.sceneIndex[1][0] = shadowIndex[0]
-              gameManager.sceneIndex[1][1] = shadowIndex[1]
-              switch = True
-              break
-          if not(switch):
-            raise IndexError  
-        except IndexError or AttributeError:
-          gameManager.sceneIndex[1][0] = tempArray[0]
-          gameManager.sceneIndex[1][1] = tempArray[1]
-          tempPos = sceneParts[gameManager.sceneIndex[1][0]][gameManager.sceneIndex[1][1]].playerPos
-          gameManager.Player.setPos(tempPos[0], tempPos[1])
+      if temp == "reset":
+        gameManager.shadow = False
+        gameManager.sceneIndex[1][0] = tempArray[0]
+        gameManager.sceneIndex[1][1] = tempArray[1]
+        shadowIndex[1] = gameManager.sceneIndex[1][1]
+        shadowIndex[0] = gameManager.sceneIndex[1][0]
+        if sceneParts[tempArray[0]][tempArray[1]].cage is not None:
+            gameManager.Player.setPos(sceneParts[tempArray[0]][tempArray[1]].cage.pos[0], sceneParts[tempArray[0]][tempArray[1]].cage.pos[1])
+        else:
+            gameManager.Player.setPos(0, 0)
+        gameManager.clearLevel()
+      else:
+          if temp == "shadow":
+            try:
+              switch = False
+              for shadowRect in sceneParts[shadowIndex[0]][shadowIndex[1]].shadowSpawn:
+                if shadowRect.colliderect(gameManager.Player.rect):
+                  gameManager.Player.shadow = False
+                  gameManager.Player.alive = True
+                  gameManager.sceneIndex[1][0] = shadowIndex[0]
+                  gameManager.sceneIndex[1][1] = shadowIndex[1]
+                  gameManager.shadow = False
+                  switch = True
+                  break
+              if not(switch):
+                gameManager.shadow = True
+                gameManager.Player.alive = False
+            except IndexError:
+              gameManager.shadow = True
+              gameManager.Player.alive = False
+          else:
+            if temp is None:
+              return None
+            shadowIndex[1] += temp[1]
+            shadowIndex[0] += temp[0]
+            shadowTimer += 1
+            gameManager.shadow = True

@@ -25,7 +25,6 @@ def main(gameManager):  # starting scene
   all_sprites = pg.sprite.Group()
   all_sprites.add(background, button)
 
-  menu = False
   run = True
   transparency = 255
   while True:
@@ -35,12 +34,7 @@ def main(gameManager):  # starting scene
         pg.quit()
         exit()
 
-      elif event.type == pg.KEYDOWN:
-        if event.key == pg.K_ESCAPE:
-          menu = not (menu)
-
     if (button.isClick()):  # checks if start button is clicked
-      if not (menu):
         run = False  # tells main to add 1 to scene index
 
     for sprite in all_sprites:
@@ -50,7 +44,7 @@ def main(gameManager):  # starting scene
                  [0, 0, gameManager.screenWidth, gameManager.screenHeight])
 
     keys = pg.key.get_pressed()
-    if keys[pg.K_g]:
+    if gameManager.devMode and keys[pg.K_t]:
         while True:
             try:
                 scene = input("What scene? (1, 2, 3, ...) \n")
@@ -64,15 +58,6 @@ def main(gameManager):  # starting scene
                 return None
             except:
               pass
-
-    if menu:
-      keys = pg.key.get_pressed()
-      if keys[pg.K_g]:
-        level = input("What level?\n")
-        return int(level)
-      screen.blit(surface, (0, 0))
-      pg.draw.rect(surface, (0, 0, 0, 100),
-                   [0, 0, gameManager.screenWidth, gameManager.screenHeight])
 
     if run and transparency > 0:
       transparency -= 10
