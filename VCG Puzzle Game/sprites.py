@@ -1,6 +1,8 @@
+from msilib.schema import TextStyle
 from PIL import Image
 from PIL.ImageFilter import FIND_EDGES
 import pygame as pg
+import pickle
 
 pg.init()
 screen = pg.display.set_mode((1,1))
@@ -31,11 +33,9 @@ class GameManager:  ########## Game manager #########
     width, height = pg.display.get_desktop_sizes()[0]
     width = round(width / 22) * 22
     self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
-    #self.screen = pg.display.set_mode((width, width * 9/16))
     self.screenWidth = self.screen.get_width()
     self.screenHeight = self.screen.get_height()
     self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
-    #self.tileSize = (self.screenWidth / 22,  self.screenHeight / 12)
     self.FPS = FPS
 
     self.devMode = devMode
@@ -44,7 +44,9 @@ class GameManager:  ########## Game manager #########
     self.shadow = False
     self.Player = Player
     self.cage = None
+    self.undoManager = undoManager(self)
     self.inventoryImage = inventoryImage(self)
+    self.dialogueManager = DialogueManager(self)
     self.wall_group = pg.sprite.Group()
     self.box_group = pg.sprite.Group()
     self.colliding_box_group = pg.sprite.Group()
@@ -57,6 +59,18 @@ class GameManager:  ########## Game manager #########
     self.switch_group = pg.sprite.Group()
     self.switchWall_group = pg.sprite.Group()
     self.kill_shadow = pg.sprite.Group()
+    self.all_sprites = (self.wall_group,
+                        self.box_group,
+                        self.colliding_box_group,
+                        self.door_group,
+                        self.guard_group,
+                        self.enemy_group,
+                        self.collect_group,
+                        self.text_group,
+                        self.conveyor_group,
+                        self.switch_group,
+                        self.switchWall_group,
+                        self.kill_shadow)
 
   def clearLevel(self):
     self.cage = None
@@ -72,12 +86,15 @@ class GameManager:  ########## Game manager #########
     self.switch_group.empty()
     self.switchWall_group.empty()
     self.kill_shadow.empty()
+    self.undoManager.clearActions()
       
   def checkCollisions(self):
     self.complexCollision(self.Player)
     for guard in self.guard_group:
-        self.complexCollision(guard)
+        if guard.alive:
+            self.complexCollision(guard)
     self.boxPush()
+    self.undoManager.addActionMovement()
     self.conveyorPush()
     self.collisionReset()
 
@@ -100,14 +117,15 @@ class GameManager:  ########## Game manager #########
             if len(box_switch) <= 0 and box in switch.boxColliding:
                 switch.boxColliding.remove(box)
     for guard in self.guard_group:
-        guard_switch = pg.sprite.spritecollide(guard, self.switch_group, False) # guard * switch
-        for switch in guard_switch:
-            if guard not in switch.guardColliding:
-                switch.switchValues()
-                switch.guardColliding.append(guard)  
-        for switch in self.switch_group:
-            if len(guard_switch) <= 0 and guard in switch.guardColliding:
-                switch.guardColliding.remove(guard)
+        if guard.alive:
+            guard_switch = pg.sprite.spritecollide(guard, self.switch_group, False) # guard * switch
+            for switch in guard_switch:
+                if guard not in switch.guardColliding:
+                    switch.switchValues()
+                    switch.guardColliding.append(guard)  
+            for switch in self.switch_group:
+                if len(guard_switch) <= 0 and guard in switch.guardColliding:
+                    switch.guardColliding.remove(guard)
          
     
     collided_enemies = pg.sprite.spritecollide(self.Player, self.enemy_group, False) # player * enemy
@@ -120,25 +138,24 @@ class GameManager:  ########## Game manager #########
             
     guard_box = pg.sprite.groupcollide(self.guard_group, self.box_group, False, False)   # guard * box
     for guard, box in guard_box.items():
-        if guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY:
-            guard.vision.kill()
-            guard.kill()
+        if guard.alive and guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY:
+            guard.killed()
         
     guard_switchWall = pg.sprite.groupcollide(self.guard_group, self.switchWall_group, False, False) # guard * switchWall
     for guard, switchWalls in guard_switchWall.items():
-        for switchWall in switchWalls:
-            if switchWall.on:
-                if guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY:
-                    guard.vision.kill()
-                    guard.kill()
-                    break
+        if guard.alive:
+            for switchWall in switchWalls:
+                if switchWall.on:
+                    if guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY:
+                        guard.killed()
+                        break
                 
                 
-    obj_collectible = pg.sprite.spritecollide(self.Player, self.collect_group, False) # obj * collectible
-    for collect in obj_collectible:
+    player_collectible = pg.sprite.spritecollide(self.Player, self.collect_group, False) # player * collectible
+    for collect in player_collectible:
         collect.collected()
     
-    collided_text = pg.sprite.spritecollide(self.Player, self.text_group, False) # obj * text
+    collided_text = pg.sprite.spritecollide(self.Player, self.text_group, False) # player * text
     for text in self.text_group:
         text.colliding = False
     for text in collided_text:
@@ -158,6 +175,8 @@ class GameManager:  ########## Game manager #########
             self.Player.collidingreal = False
     else:
         self.Player.collidingreal = False
+        
+    self.undoManager.addActionStatus()
 
   def gameCollision(self, obj):
     obj.pos_float[0] = (obj.preX)
@@ -346,27 +365,129 @@ class GameManager:  ########## Game manager #########
               
     guard_conveyor = pg.sprite.groupcollide(self.guard_group, self.conveyor_group, False, False) # guard * conveyor
     for guard, conveyors in guard_conveyor.items():
-        if len(conveyors) == 1:
-            if not(conveyors[0].on):  
-                conveyors[0].on = True
-            else:            
-                conveyors[0].move(guard)
-                self.complexCollision(guard)
-        elif len(conveyors) > 1:
-            tempArray = [0, 0]
-            tempArray[0] = guard.pos_float[0]
-            tempArray[1] = guard.pos_float[1]
-            for conveyor in conveyors:
-                if not(conveyor.on):  
-                    conveyor.on = True
-                else:
-                    conveyor.move(guard)
+        if guard.alive:
+            if len(conveyors) == 1:
+                if not(conveyors[0].on):  
+                    conveyors[0].on = True
+                else:            
+                    conveyors[0].move(guard)
                     self.complexCollision(guard)
-            if not(tempArray[0] == guard.pos_float[0] and tempArray[1] == guard.pos_float[1]):
-                self.gameCollision(guard)
+            elif len(conveyors) > 1:
+                tempArray = [0, 0]
+                tempArray[0] = guard.pos_float[0]
+                tempArray[1] = guard.pos_float[1]
+                for conveyor in conveyors:
+                    if not(conveyor.on):  
+                        conveyor.on = True
+                    else:
+                        conveyor.move(guard)
+                        self.complexCollision(guard)
+                if not(tempArray[0] == guard.pos_float[0] and tempArray[1] == guard.pos_float[1]):
+                    self.gameCollision(guard)
              
+ 
+class saveState: ########## saveState ###########
+    def __init__(self, gameManager):
+       self.maanager = gameManager
+       self.sceneIndex = None
+       self.playerPos = None
+       self.all_sprites = None
+       self.keys = None
+       self.coins = None
+       self.maps = None
+       
+    def save(self):
+       self.sceneIndex = self.manager.sceneIndex
+       self.playerPos = self.manager.Player.pos_float
+       self.all_sprites = self.maanager.all_sprites
+       self.keys = self.manager.inventoryImage.keys
+       self.coins = self.manager.inventoryImage.coins
+       self.maps = self.manager.inventoryImage.maps
+       
 
-    
+class undoManager: ############ undo manager #############
+   def __init__(self, manager):
+      self.manager = manager
+      self.sprite_actions = []
+      self.frame = []
+      
+   def update(self, event):
+        if event.key == pg.K_z:
+            self.undo()
+            
+   def undo(self):
+      length = len(self.sprite_actions)
+      if length > 0:
+          for action in self.sprite_actions[length - 1]:
+             if action[0] == self.manager.Player:
+                 self.setPos(action[0], action[1])
+                 if action[3] is not None and not(action[3].playerColliding):
+                    action[3].playerColliding = True
+                 action[0].direction = action[2]
+             elif action[0] in self.manager.box_group:
+                 self.setPos(action[0], action[1])
+                 if action[2] is not None and action[0] not in action[2].boxColliding:
+                    action[2].boxColliding.append(action[0])
+             elif action[0] in self.manager.guard_group:
+                 if isinstance(action[1], (int)):
+                     if action[1]:
+                        action[0].revive()
+                     else:
+                        action[0].killed()
+                 else:
+                     self.setPos(action[0], action[1])
+                     action[0].vision.image= action[2]
+                     action[0].cover = action[3]
+                     action[0].turn = action[4]
+                     action[0].cooldown = action[5]
+                     action[0].updateVision()
+             else:
+                action[0].switchValues()
+          self.sprite_actions.pop()
+
+   def setPos(self, obj, pos):
+      obj.pos_float[0] = pos[0]
+      obj.pos_float[1] = pos[1]
+      obj.preX = obj.pos_float[0]
+      obj.preY = obj.pos_float[1]
+      obj.rect.x = round(obj.pos_float[0])
+      obj.rect.y = round(obj.pos_float[1])
+            
+   def clearActions(self):
+      self.sprite_actions.clear()
+      
+   def addActionMovement(self):
+      self.frame = []
+      if not(self.manager.Player.preX == self.manager.Player.pos_float[0] and self.manager.Player.preY == self.manager.Player.pos_float[1]):
+          collidedSwitches = None
+          for switch in self.manager.switch_group:
+             if switch.playerColliding:
+                collidedSwitches = switch
+          self.frame.append([self.manager.Player, [self.manager.Player.preX, self.manager.Player.preY], self.manager.Player.preDirection, collidedSwitches])
+      for box in self.manager.box_group:
+         if not(box.preX == box.pos_float[0] and box.preY == box.pos_float[1]):
+            switchCollide = None
+            for switch in self.manager.switch_group:
+                if box in switch.boxColliding:
+                    switchCollide = switch
+                   
+            self.frame.append([box, [box.preX, box.preY], switchCollide])
+      if len(self.frame) > 0:
+         for guard in self.manager.guard_group:
+             self.frame.append([guard, [guard.preX, guard.preY], guard.preImage, guard.preCover, guard.preTurn, guard.preCooldown])
+   
+   def addActionStatus(self):
+      for switch in self.manager.switch_group:
+         if not(switch.preOn == switch.on):
+            self.frame.append([switch, switch.preOn])    
+      for guard in self.manager.guard_group:
+          if not(guard.preAlive == guard.alive):
+            self.frame.append([guard, guard.preAlive])
+      if not(len(self.frame) == 0):
+        self.sprite_actions.append(self.frame)
+        self.frame = []
+      
+
 class Sprite(pg.sprite.Sprite):  ######### sprite #########
 
   def __init__(self,
@@ -414,8 +535,97 @@ class Collider(Sprite):  ########## collider #############
     super().__init__(image, pos, manager, grid, *groups)
       
 
+class DialogueManager(Sprite): ########## dialogueManager ###########
 
-class inventoryImage(Sprite):
+    def __init__(self, manager):
+       self.image = pg.transform.scale(pg.image.load("sprites/Misc/dialogueBox.png").convert_alpha(), (manager.screenWidth - manager.tileSize[0], 4.5 * manager.tileSize[1]))
+       self.speakerImage = pg.transform.scale(pg.image.load("sprites/Misc/speakerBox.png").convert_alpha(), (manager.tileSize[0] * 2.5, manager.tileSize[1] * .75))
+       super().__init__(self.image, None, manager)
+       
+       self.rect.x = manager.tileSize[0] * .5
+       self.rect.y = manager.tileSize[0] * 7
+       self.startx = self.rect.x
+       self.starty = self.rect.y
+       self.manager = manager
+       self.textTimer = 0
+       self.show = False
+       
+       self.text = ""
+       self.speakerName = ""
+       self.font = pg.font.Font('freesansbold.ttf', round(manager.tileSize[1] / 2))
+       self.words = [word.split(' ') for word in self.text.splitlines()]  # 2D array where each row is a list of words.
+       self.textColor = (255,255,255)
+       self.boxNum = 0
+       self.boxIndex = 0
+       
+    def setText(self, text, speakerName="", color=(255,255,255), size=.5, font='freesansbold.ttf'):
+       self.textTimer = 0
+       self.boxIndex = 0
+       self.text = text
+       self.speakerName = speakerName
+       self.font = pg.font.Font(font, round(self.manager.tileSize[1] * size))
+       self.words = [word.split(' ') for word in text.splitlines()]
+       self.textColor = color
+       self.show = True
+       
+    def update(self):
+        if self.show:
+            self.textTimer += 0
+            keys = pg.key.get_pressed()
+            if keys[pg.K_RETURN]:
+                self.boxIndex += 1
+                if self.boxIndex >= self.boxNum:
+                    self.show = False
+                    self.textTimer = 0
+                    self.boxIndex = 0
+       
+    def draw(self, screen):
+        if self.show:
+            super().draw(screen)
+            margin = [self.manager.tileSize[0] / 3, self.manager.tileSize[1] / 3]
+            if not(self.speakerName == ""):
+                screen.blit(self.speakerImage, pg.Rect(self.startx, self.starty - self.manager.tileSize[1], 0, 0))
+                screen.blit(self.font.render(self.speakerName, 0, self.textColor), pg.Rect(self.startx + margin[0], self.starty - self.manager.tileSize[1] + margin[1] / 2, 0, 0))
+            x, y = (self.startx + margin[0], self.starty + margin[1])
+            maxX = x
+            posArray = [[]]
+            imageWidth = self.image.get_width() - (2 * margin[0])
+            imageHeight = self.image.get_height() - (2 * margin[1])
+            space = self.font.size(' ')[0]  # The width of a space
+            i = 0
+            for line in self.words:
+                for word in line:
+                    word_surface = self.font.render(word, 0, self.textColor)
+                    word_width, word_height = self.font.size(word)
+                    if x + word_width >= (imageWidth + self.startx):
+                        x = self.startx + margin[0]  # Reset the x.
+                        y += word_height  # Start on new row.
+                        if y >= (imageHeight + self.starty):
+                           i += 1
+                           y = self.starty + margin[1]
+                           posArray.append([])
+                    posArray[i].append((x, y))
+                    x += word_width + space
+                    if x > maxX:
+                        maxX = x
+                x = self.startx + margin[0]  # Reset the x.
+                y += word_height
+                if y >= (imageHeight + self.starty):
+                    i += 1
+                    y = self.starty + margin[1]
+                    posArray.append([])
+            self.boxNum = i
+            j = 0
+            for line in self.words:
+                for word in line:
+                    word_surface = self.font.render(word, 0, self.textColor)
+                    screen.blit(word_surface, (posArray[self.boxIndex][j][0], posArray[self.boxIndex][j][1]))
+                    j += 1
+                    if len(posArray[self.boxIndex]) <= j:
+                       break
+    
+
+class inventoryImage(Sprite): ############### inventoryImage #################
   
     def __init__(self, manager, *groups):
       self.manager = manager
@@ -426,13 +636,30 @@ class inventoryImage(Sprite):
       self.collectibles = pg.sprite.Group()
       self.keys = Item(pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
       self.coins = Item(pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
-      self.collectibles.add(self.keys, self.coins)
+      self.maps = Item(pg.transform.scale(pg.image.load("sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
+      self.collectibles.add(self.keys, self.coins, self.maps)
+      self.showMap = False
+
+    def update(self):
+       keys = pg.key.get_pressed()
+       if keys[pg.K_m] and self.searchInv("map" + str(self.manager.sceneIndex[0])):
+          self.showMap = True
+       else:
+          self.showMap = False
+       
 
     def addItem(self, collectible):
         if collectible.type == "key":
             self.keys.addItem(collectible)
         elif collectible.type == "coin":
             self.coins.addItem(collectible)
+        elif collectible.type == "map":
+            self.maps.addItem(collectible)
+
+    def searchMap(self):
+        if self.maps.num == 0:
+            return False
+        return True
 
     def searchInv(self, name):
         for item in self.collectibles:
@@ -442,14 +669,19 @@ class inventoryImage(Sprite):
 
     def removeCollect(self, name):
         for item in self.collectibles:
-            item.names.remove(name)
-            item.num -= 1
-            return True
+            if name in item.names:
+                item.names.remove(name)
+                item.num -= 1
+                return True
         return False
       
-       
     def draw(self, screen):
       i = 0
+      if self.showMap:
+        tempImage = pg.transform.scale(pg.image.load("sprites/Maps/map" + str(self.manager.sceneIndex[0]) + ".png").convert_alpha(), (self.manager.tileSize[0] * 11, self.manager.tileSize[1] * 6))
+        tempRect = tempImage.get_rect()
+        tempRect.center = [self.manager.screenWidth // 2, self.manager.screenHeight // 2]
+        screen.blit(tempImage, tempRect)
       for item in self.collectibles:
         if item.num > 0:
             itemImage = item.image.copy()
@@ -468,7 +700,7 @@ class inventoryImage(Sprite):
             pass
         
 
-class Item(Sprite):
+class Item(Sprite): ############ Item #################
 
     def __init__(self, image, *groups):
         self.names = []
@@ -484,13 +716,16 @@ class Item(Sprite):
 
 class Collectible(Collider):  ####### Collectible #########
 
-  def __init__(self, pos, type, name, manager, *groups):
-    if type == "key":
+  def __init__(self, pos, collectType, name, manager, *groups):
+    if collectType == "key":
         image = pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1]))
         self.frames = [image]
-    elif type == "coin":
+    elif collectType == "coin":
         self.frames = spriteSheet("sprites/Collectibles/coin.png", 32, 32, 10, manager)
         image = self.frames[0]
+    elif collectType == "map":
+        image = pg.transform.scale(pg.image.load("sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+        self.frames = [image]
     else:
         image = pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],
             manager.tileSize[1]))
@@ -500,12 +735,17 @@ class Collectible(Collider):  ####### Collectible #########
     self.globalFPS = manager.FPS
 
     self.inInventory = False
-    self.type = type
+    self.type = collectType
     self.name = name
     self.manager = manager
     super().__init__(image, pos, manager, *groups)
+    
 
   def collected(self):
+    if self.type == "map" and not(self.manager.inventoryImage.searchMap()):
+       self.manager.dialogueManager.setText("press 'M' to open the map. ('ENTER' to close dialogue)")
+    elif self.type == "coin" and self.manager.inventoryImage.coins.num >= 4:
+       self.manager.dialogueManager.setText("Congragulations! You have collected all the coins. This is end (at this moment) of the playtest. Thank you for playing!")
     self.image = self.frames[0]
     self.inInventory = True
     self.manager.inventoryImage.addItem(self)
@@ -556,6 +796,7 @@ class Player(Collider):  ############ player ##############
     self.alive = True
 
     self.direction = "E"
+    self.preDirection = self.direction
     self.clock = 0
     self.globalFPS = manager.FPS
 
@@ -582,6 +823,7 @@ class Player(Collider):  ############ player ##############
   def update(self):
     self.preX = self.pos_float[0]
     self.preY = self.pos_float[1]
+    self.preDirection = self.direction
     keys = pg.key.get_pressed()
 
     if not (keys[pg.K_w]) and not (keys[pg.K_a]) and not (
@@ -623,7 +865,9 @@ class Player(Collider):  ############ player ##############
       self.shadow = False
       
     if self.manager.devMode and keys[pg.K_h]:
-        self.hide = not(self.hide)
+        self.hide = True
+    else:
+        self.hide = False
 
     if self.shadow:
       if self.direction == "N":
@@ -650,7 +894,6 @@ class Player(Collider):  ############ player ##############
   def move(self, x, y):
     self.pos_float[0] += x * self.manager.tileSize[0]
     self.pos_float[1] += y * self.manager.tileSize[1]
-
 
   def killed(self):
     self.alive = False
@@ -698,6 +941,7 @@ class text(Collider):  ################ text ###############
     image = pg.transform.scale(pg.image.load("sprites/Misc/textBubble.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
     self.font = pg.font.Font(font, round(textSize * manager.tileSize[1]))
 
+    self.text = text
     self.words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
     self.textColor = textColor
 
@@ -713,6 +957,7 @@ class text(Collider):  ################ text ###############
   def draw(self, screen):
 
     if self.colliding:
+      #self.manager.dialogueManager.setText("the most common pencil casing is thin wood, usually hexagonal in section, but sometimes cylindrical or triangular, permanently bonded to the core. Casings may be of other materials, such as plastic or paper. To use the pencil, the casing must be carved or peeled off to expose the working end of the core as a sharp point. Mechanical pencils have more elaborate casings which are not bonded to the core; instead, they support separate, mobile pigment cores that can be extended or retracted (usually through the casing's tip) as needed. These casings can be reloaded with new cores (usually graphite) as the previous ones are exhausted. As a technique for drawing, the closest predecessor to the pencil was silverpoint or leadpoint until in 1565 (some sources say as early as 1500), a large deposit of graphite was discovered on the approach to Grey Knotts from the hamlet of Seathwaite in Borrowdale parish, Cumbria, England.[4][5][6][7] This particular deposit of graphite was extremely pure and solid, and it could easily be sawn into sticks. It remains the only large-scale deposit of graphite ever found in this solid form.", "Sam")
       x, y = (self.startx, self.starty)
       maxX = x
       posArray = []
@@ -721,7 +966,7 @@ class text(Collider):  ################ text ###############
           for word in line:
               word_surface = self.font.render(word, 0, self.textColor)
               word_width, word_height = self.font.size(word)
-              if x + word_width >= self.textBoxWdith:
+              if x + word_width >= (self.textBoxWdith + self.startx):
                   x = self.startx  # Reset the x.
                   y += word_height  # Start on new row.
               posArray.append((x, y))
@@ -744,8 +989,6 @@ class text(Collider):  ################ text ###############
           word_surface = self.font.render(word, 0, self.textColor)
           screen.blit(word_surface, (posArray[i][0] - (maxX / 2), posArray[i][1] - (height / 2)))
           i += 1
-
-
     else:
       screen.blit(self.image, self.rect)
 
@@ -863,20 +1106,26 @@ class Guard(Collider):  ############ guard ############
 
     self.distance = distance
     self.cover = 0
+    self.preCover = 0
 
     self.hor = hor
     self.turn = False
+    self.preTurn = False
 
     self.preX = (pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2
     self.preY = (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2
     self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2]
 
     self.cooldown = 0
+    self.preCooldown = 0
     self.windup = speed
 
     super().__init__(image, pos, manager, *groups)
 
     self.manager = manager
+
+    self.alive = True
+    self.preAlive = True
 
     self.vision = visionCone(self)
 
@@ -886,74 +1135,94 @@ class Guard(Collider):  ############ guard ############
     else:
       self.vision.image = pg.transform.rotate(self.vision.image, 180)
 
+    self.preImage = self.vision.image
+      
+    self.update()
+
+  def killed(self):
+      self.alive = False
+      self.manager.enemy_group.remove(self.vision)
+      self.manager.enemy_group.remove(self)
+
+  def revive(self):
+      self.alive = True
+      self.manager.enemy_group.add(self)
+      self.manager.enemy_group.add(self.vision)
 
   def update(self):
-    self.preX = self.pos_float[0]
-    self.preY = self.pos_float[1]
-    self.vision.preX = self.vision.rect.x
-    self.vision.preY = self.vision.rect.y
-    if self.cooldown <= 0:
-      if self.hor:
-        if self.cover < self.distance:
-          self.cover += 1
-          if not(self.turn):
-            self.pos_float[0] += self.manager.tileSize[0]
-            self.rect.x = self.pos_float[0]
-            self.vision.rect.midleft = self.rect.center
+    self.preAlive = self.alive
+    self.preImage = self.vision.image
+    self.preCover = self.cover
+    self.preTurn = self.turn
+    self.preCooldown = self.cooldown
+    if self.alive:
+        self.preX = self.pos_float[0]
+        self.preY = self.pos_float[1]
+        self.vision.preX = self.vision.rect.x
+        self.vision.preY = self.vision.rect.y
+        if self.cooldown <= 0:
+          if self.hor:
+            if self.cover < self.distance:
+              self.cover += 1
+              if not(self.turn):
+                self.pos_float[0] += self.manager.tileSize[0]
+                self.rect.x = self.pos_float[0]
+                self.vision.rect.midleft = self.rect.center
+              else:
+                self.pos_float[0] -= self.manager.tileSize[0]
+                self.rect.x = self.pos_float[0]
+                self.vision.rect.midright = self.rect.center
+            else:
+              self.cover = 0
+              self.turnSelf()
           else:
-            self.pos_float[0] -= self.manager.tileSize[0]
-            self.rect.x = self.pos_float[0]
-            self.vision.rect.midright = self.rect.center
+            if self.cover < self.distance:
+              self.cover += 1
+              if not(self.turn):
+                self.pos_float[1] += self.manager.tileSize[1]
+                self.rect.y = self.pos_float[1]
+                self.vision.rect.midtop = self.rect.center
+              else:
+                self.pos_float[1] -= self.manager.tileSize[1]
+                self.rect.y = self.pos_float[1]
+                self.vision.rect.midbottom = self.rect.center
+            else:
+              self.cover = 0
+              self.turnSelf()
+          self.cooldown = self.manager.FPS
         else:
-          self.cover = 0
-          self.turnSelf()
-      else:
-        if self.cover < self.distance:
-          self.cover += 1
-          if not(self.turn):
-            self.pos_float[1] += self.manager.tileSize[1]
-            self.rect.y = self.pos_float[1]
-            self.vision.rect.midtop = self.rect.center
-          else:
-            self.pos_float[1] -= self.manager.tileSize[1]
-            self.rect.y = self.pos_float[1]
-            self.vision.rect.midbottom = self.rect.center
-        else:
-          self.cover = 0
-          self.turnSelf()
-      self.cooldown = self.manager.FPS
-    else:
-      self.cooldown -= self.windup
+          self.cooldown -= self.windup
 
   def updateVision(self):
     if self.hor:
-        if not(self.turn):
-            self.vision.rect.midleft = self.rect.center
+        if self.turn:
+            self.vision.rect = self.vision.image.get_rect(midright=self.rect.center)
         else:
-            self.vision.rect.midright = self.rect.center
+            self.vision.rect = self.vision.image.get_rect(midleft=self.rect.center)
     else:
-        if not(self.turn):
-            self.vision.rect.midtop = self.rect.center
+        if self.turn:
+            self.vision.rect = self.vision.image.get_rect(midbottom=self.rect.center)
         else:
-            self.vision.rect.midbottom = self.rect.center
+            self.vision.rect = self.vision.image.get_rect(midtop=self.rect.center)
 
   def turnSelf(self):
-    self.vision.image = pg.transform.rotate(self.vision.image, 180)
-    self.image = pg.transform.rotate(self.image, 180)
-    if self.hor:
-      if not(self.turn):
-        self.vision.rect = self.vision.image.get_rect(midright=self.rect.center)
-        self.turn = True
-      else:
-        self.vision.rect = self.vision.image.get_rect(midleft=self.rect.center)
-        self.turn = False
-    else:
-      if not(self.turn):
-        self.vision.rect = self.vision.image.get_rect(midbottom=self.rect.center)
-        self.turn = True
-      else:
-        self.vision.rect = self.vision.image.get_rect(midtop=self.rect.center)
-        self.turn = False
+    if self.alive:
+        self.vision.image = pg.transform.rotate(self.vision.image, 180)
+        self.image = pg.transform.rotate(self.image, 180)
+        if self.hor:
+          if not(self.turn):
+            self.vision.rect = self.vision.image.get_rect(midright=self.rect.center)
+            self.turn = True
+          else:
+            self.vision.rect = self.vision.image.get_rect(midleft=self.rect.center)
+            self.turn = False
+        else:
+          if not(self.turn):
+            self.vision.rect = self.vision.image.get_rect(midbottom=self.rect.center)
+            self.turn = True
+          else:
+            self.vision.rect = self.vision.image.get_rect(midtop=self.rect.center)
+            self.turn = False
 
   def addSelf(self, manager):
     manager.guard_group.add(self)
@@ -961,8 +1230,9 @@ class Guard(Collider):  ############ guard ############
     manager.enemy_group.add(self.vision)
 
   def draw(self, screen):
-    screen.blit(self.image, self.rect)
-    screen.blit(self.vision.image, self.vision.rect)
+    if self.alive:
+        screen.blit(self.image, self.rect)
+        screen.blit(self.vision.image, self.vision.rect)
 
 
 class Box(Collider):  ############### box ################
@@ -1022,11 +1292,13 @@ class Switch(Collider):  ############ switch #############
     self.boxColliding = []
     self.guardColliding = []
     self.on = False
+    self.preOn = False
 
   def addSelf(self, manager):
     manager.switch_group.add(self)
 
   def update(self):
+    self.preOn = self.on
     if self.color == "red":
       i = 0
     elif self.color == "blue":
@@ -1072,14 +1344,17 @@ class switchWall(Collider):  ############ switchWall ######
       image = self.frames[2][0]
 
 
-    self.on = on
     self.color = color
 
-    self.switched = on
+    self.on = on
+    self.preOn = on
 
     super().__init__(image, pos, manager, True)
+    
+    self.update()
 
   def update(self):
+    self.preOn = self.on
     if self.color == "red":
       i = 0
     elif self.color == "blue":
@@ -1136,8 +1411,10 @@ class Door(Collider):  ############# door ###########
 
   def open(self, manager):
     if self.isOpen and manager.inventoryImage.searchInv(self.item):
-      #manager.inventoryImage.removeCollect(self.item)
-      return True
+       manager.inventoryImage.keys.num -= 1
+       return True
+    elif self.isOpen:
+       manager.dialogueManager.setText("Missing scene_" + str(manager.sceneIndex[0]) + " key. ('ENTER' to close dialogue)")
 
 
 class Button(Sprite):  ############# button ##################
@@ -1297,7 +1574,9 @@ class Grid: ################ grid ###################
      keys = pg.key.get_pressed()
         
      if self.manager.devMode and keys[pg.K_g]:
-         self.hide = not(self.hide)
+         self.hide = False
+     else:
+         self.hide = True
 
   def draw(self, screen):
     if not self.hide:

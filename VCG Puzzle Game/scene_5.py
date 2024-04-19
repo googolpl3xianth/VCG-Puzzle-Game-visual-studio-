@@ -12,9 +12,9 @@ def main(gameManager):  # first scene
   background = spr.Background("sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((0, 11), False, 22, True, gameManager),
-                               spr.Wall((0, 0), False, 22, True, gameManager),
-                               spr.Wall((0, 0), True, 8, True, gameManager),
-                               spr.Wall((0, 10), True, 2, True, gameManager))
+                spr.Wall((0, 0), False, 22, True, gameManager),
+                spr.Wall((0, 0), True, 8, True, gameManager),
+                spr.Wall((0, 10), True, 2, True, gameManager))
   door_group = (spr.Door((0, 8), "E", (4, [1, 3]), "key4", gameManager))
 
   all_sprites.add(background, wall_group, gameManager.Player, door_group, cage)
@@ -24,9 +24,9 @@ def main(gameManager):  # first scene
   ######################### b #######################
   all_sprites = pg.sprite.Group()
   wall_group = (spr.Wall((1, 11), False, 21, True, gameManager),
-                               spr.Wall((0, 0), False, 22, True, gameManager),
-                               spr.Wall((21, 0), True, 8, True, gameManager),
-                               spr.Wall((21, 10), True, 2, True, gameManager))
+                spr.Wall((0, 0), False, 22, True, gameManager),
+                spr.Wall((21, 0), True, 8, True, gameManager),
+                spr.Wall((21, 10), True, 2, True, gameManager))
   door_group = (spr.Door((21, 8), "W", (6, [0, 0]), "key5", gameManager))
 
   brokenWall = (spr.Sprite(pg.transform.scale(pg.image.load("sprites/Walls/brokenWall.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1])), (0, 11), gameManager))
@@ -119,15 +119,16 @@ def main(gameManager):  # first scene
                 spr.Wall((4, 7), False, 13, True, gameManager),
                 spr.Wall((4, 5), False, 10, True, gameManager))
   
-  RSwitchWall_group = [spr.switchWall((16, 11), "red", False, gameManager),
-                      spr.switchWall((18, 11), "red", False, gameManager)]
+  RSwitchWall_group = [spr.switchWall((16, 11), "red", True, gameManager),
+                      spr.switchWall((18, 11), "red", True, gameManager)]
   GSwitchWall_group = [spr.switchWall((17, 5), "green", False, gameManager),
                        spr.switchWall((17, 7), "green", False, gameManager),
                        spr.switchWall((16, 6), "green", False, gameManager)]
   BSwitchWall_group = [spr.switchWall((1, 8), "blue", False, gameManager),
                        spr.switchWall((1, 10), "blue", False, gameManager)]
   
-  switch_group = (spr.Switch((17, 11), RSwitchWall_group, gameManager),
+  switch_group = (spr.Switch((17, 1), RSwitchWall_group, gameManager),
+                  spr.Switch((17, 11), RSwitchWall_group, gameManager),
                   spr.Switch((17, 6), GSwitchWall_group, gameManager),
                   spr.Switch((1, 9), BSwitchWall_group, gameManager))
   

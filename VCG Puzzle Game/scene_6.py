@@ -11,12 +11,12 @@ def main(gameManager):  # first scene
 
   background = spr.Background("sprites/BGs/blackBG.png", gameManager)
 
-  door_group = (spr.Door((0, 8), "E", (5, [1, 1]), "key5", gameManager))
+  door_group = (spr.Door((0, 8), "E", (5, [1, 2]), "key5", gameManager))
 
   text_group = (
-      spr.text((4, 7), 12, "there are 5 coins to collect in scene_1 and 2",
+      spr.text((4, 7), 12, "there are 5 coins to collect",
                gameManager, 1, (0, 255, 0)),
-      spr.text((4, 5), 12, "scattered at the edges of each scene", gameManager, 1, (0, 255, 0)))
+      spr.text((4, 5), 12, "scattered at the edges of each past scene", gameManager, 1, (0, 255, 0)))
 
   kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0],

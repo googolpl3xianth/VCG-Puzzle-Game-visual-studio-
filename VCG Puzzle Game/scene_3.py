@@ -11,21 +11,19 @@ def main(gameManager):
   cage = spr.Cage((1, 10), gameManager)
   background = spr.Background("sprites/BGs/edge.png", gameManager)
 
-  wall_group = (spr.Wall((21, .5), True, 2, True, gameManager),
-                               spr.Wall((21, 3.5), True, 3, True, gameManager),
-                               spr.Wall((0, 11), False, 22, True, gameManager),
-                               spr.Wall((0, 0), False, 22, True, gameManager),
-                               spr.Wall((0, 0), True, 8, True, gameManager),
-                               spr.Wall((0, 10), True, 2, True, gameManager),
-                               spr.Wall((21, 6), False, 1, True, gameManager),
-                               spr.Wall((1, 2), False, 3, True, gameManager),
-                               spr.Wall((2, 4), True, 4, True, gameManager))
+  wall_group = (spr.Wall((21, .5), True, 3, True, gameManager),
+                spr.Wall((21, 4.5), True, 2, True, gameManager),
+                spr.Wall((0, 11), False, 22, True, gameManager),
+                spr.Wall((0, 0), False, 22, True, gameManager),
+                spr.Wall((0, 0), True, 8, True, gameManager),
+                spr.Wall((0, 10), True, 2, True, gameManager),
+                spr.Wall((21, 6), False, 1, True, gameManager),
+                spr.Wall((1, 2), False, 3, True, gameManager),
+                spr.Wall((2, 4), True, 4, True, gameManager))
   door_group = (spr.Door((0, 8), "E", (2, [1, 0]), "key2", gameManager))
   switchWall_group = [
-      spr.switchWall((21, 7), "green", True, gameManager),
-      spr.switchWall((21, 8), "green", True, gameManager),
-      spr.switchWall((21, 9), "green", True, gameManager),
-      spr.switchWall((21, 10), "green", True, gameManager)]
+      spr.switchWall((19, 1), "green", True, gameManager),
+      spr.switchWall((20, 2), "green", True, gameManager)]
   switch_group = (
       spr.Switch((1, 1), switchWall_group, gameManager))
   
@@ -39,9 +37,11 @@ def main(gameManager):
                     spr.Conveyor((15, 10), "N", gameManager))
   
   box_group = (spr.Box((2, 3), True, gameManager), spr.Box((3, 10), True, gameManager))
+  collectible_group = (
+      spr.Collectible((20, 1), "key", "key3", gameManager))
 
   all_sprites.add(background, wall_group, conveyor_group, switchWall_group, switch_group, spike_group, box_group,
-                  gameManager.Player, door_group, cage)
+                  gameManager.Player, collectible_group, door_group, cage)
 
   scene_3_a = scn.scene(gameManager, all_sprites)
 
@@ -55,9 +55,6 @@ def main(gameManager):
                                spr.Wall((0, 6), False, 22, True, gameManager),
                                spr.Wall((0, 11), False, 22, True, gameManager))
   door_group = (spr.Door((21, 7), "W", (4, [0, 3]), "key3", gameManager))
-
-  collectible_group = (
-      spr.Collectible((20, 10), "key", "key3", gameManager))
   
   GSwitchWall_group = [
       spr.switchWall((9, 7), "green", True, gameManager),
@@ -92,7 +89,7 @@ def main(gameManager):
   
   all_sprites.add(background, wall_group, kill_shadow, conveyor, 
                   GSwitchWall_group, BSwitchWall_group, switch_group,
-                  gameManager.Player, collectible_group, door_group, cage)
+                  gameManager.Player, door_group, cage)
 
   scene_3_b = scn.scene(gameManager, all_sprites)
   
@@ -107,6 +104,7 @@ def main(gameManager):
                 spr.Wall((0, 3), False, 4, True, gameManager),
                 spr.Wall((0, 5), False, 4, True, gameManager),
                 spr.Wall((3, 6), True, 2, True, gameManager),
+                spr.Wall((3, 9), True, 2, True, gameManager),
                 spr.Wall((3, 1), True, 2, True, gameManager),
                 spr.Wall((5, 6), True, 3, True, gameManager),
                 spr.Wall((5, 1), True, 2, True, gameManager),
@@ -115,7 +113,7 @@ def main(gameManager):
                 spr.Wall((10, 1), True, 6, True, gameManager),
                 spr.Wall((10, 7), False, 1, True, gameManager),
                 spr.Wall((11, 7), True, 2, True, gameManager),
-                spr.Wall((11, 9), False, 4, True, gameManager),
+                spr.Wall((11, 9), False, 3, True, gameManager),
                 spr.Wall((0, 7), True, 3, True, gameManager),
                 spr.Wall((8, 6), True, 1, True, gameManager))
 
@@ -139,7 +137,6 @@ def main(gameManager):
   
   box_group = (spr.Box((4, 2), False, gameManager), 
                spr.Box((4, 6), False, gameManager), 
-               spr.Box((15, 6), False, gameManager), 
                spr.Box((8, 2), True, gameManager))
 
   all_sprites.add(background, wall_group, RSwitchWall_group, BSwitchWall_group, GSwitchWall_group, switch_group, box_group,
@@ -152,7 +149,8 @@ def main(gameManager):
   
   cage = (spr.Cage((12, 6), gameManager))
   wall_group = (spr.Wall((0, 11), False, 22, True, gameManager),
-                spr.Wall((0, 0), False, 22, True, gameManager))
+                spr.Wall((0, 0), False, 22, True, gameManager),
+                spr.Wall((21, 1), True, 2, True, gameManager))
 
   spike = spr.Spike((10, 6), gameManager)
 
@@ -164,15 +162,16 @@ def main(gameManager):
   ######################### e #######################
   all_sprites = pg.sprite.Group()
   wall_group = (spr.Wall((0, 11), False, 22, True, gameManager),
-                spr.Wall((1, 0), False, 21, True, gameManager),
-                spr.Wall((21, 1), True, 10, True, gameManager))
+                spr.Wall((0, 0), False, 22, True, gameManager),
+                spr.Wall((21, 1), True, 10, True, gameManager),
+                spr.Wall((1, 1), True, 1, True, gameManager),
+                spr.Wall((1, 2), False, 1, True, gameManager),
+                spr.Wall((0, 2), False, 1, True, gameManager))
   
-  spike = (spr.Spike((10, 6), gameManager), 
-           spr.Spike((0, 1), gameManager))
-  door_group = (spr.Door((21, 8), "W", (6, [0, 0]), "key5", gameManager))
+  spike = (spr.Spike((10, 6), gameManager))
 
   collectible_group = (
-      spr.Collectible((0, 0), "coin", "coin3", gameManager))
+      spr.Collectible((0, 1), "coin", "coin3", gameManager))
   
   all_sprites.add(background, wall_group, spike, gameManager.Player, collectible_group)
 

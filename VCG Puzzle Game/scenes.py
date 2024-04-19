@@ -40,7 +40,7 @@ class scene:
         font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1]))
         deadText = font.render("You Died", True, (255, 0, 0))
         font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 3 / 4))
-        returnText = font.render("Press r to restart", True, (255, 0, 0))
+        returnText = font.render("Press r to restart or z to undo", True, (255, 0, 0))
         
 
         self.menuText = pg.sprite.Group(
@@ -66,6 +66,7 @@ class scene:
           if group is not (None):
             self.all_sprites.add(pg.sprite.Group(group))
         self.all_sprites.add(pg.sprite.Group(gameManager.inventoryImage))
+        self.all_sprites.add(pg.sprite.Group(gameManager.dialogueManager))
 
   def main(self):
     
@@ -94,6 +95,7 @@ class scene:
           if event.key == pg.K_r:
               self.gameManager.Player.alive = False
               restart = True
+          self.gameManager.undoManager.update(event)
             
       pg.event.pump()
       if transparency == 0 and not (menu) and returnValue is None and self.gameManager.Player.alive:
@@ -113,6 +115,7 @@ class scene:
           returnValue = door.returnIndex
           self.gameManager.sceneIndex = door.returnIndex
           return None
+          
       for sprite in self.all_sprites: ################ draws each sprite #######
         if not (menu) and returnValue is None:
           sprite.animate()
@@ -129,21 +132,73 @@ class scene:
 
       if menu and returnValue is None:
         keys = pg.key.get_pressed()
-        if keys[pg.K_t] and self.gameManager.devMode:
+        if self.gameManager.devMode and keys[pg.K_k]:
+            if keys[pg.K_1]:
+              if not(self.gameManager.inventoryImage.searchInv("key1")):
+                spr.Collectible((0,0), "key", "key1", self.gameManager).collected()
+            if keys[pg.K_2]:
+              if not(self.gameManager.inventoryImage.searchInv("key2")):
+                spr.Collectible((0,0), "key", "key2", self.gameManager).collected()
+            if keys[pg.K_3]:
+              if not(self.gameManager.inventoryImage.searchInv("key3")):
+                spr.Collectible((0,0), "key", "key3", self.gameManager).collected()
+            if keys[pg.K_4]:
+              if not(self.gameManager.inventoryImage.searchInv("key4")):
+                spr.Collectible((0,0), "key", "key4", self.gameManager).collected()
+            if keys[pg.K_5]:
+              if not(self.gameManager.inventoryImage.searchInv("key5")):
+                spr.Collectible((0,0), "key", "key5", self.gameManager).collected()
+        if self.gameManager.devMode and keys[pg.K_c]:
+            if keys[pg.K_1]:
+              if not(self.gameManager.inventoryImage.searchInv("coin1")):
+                spr.Collectible((0,0), "coin", "coin1", self.gameManager).collected()
+            if keys[pg.K_2]:
+              if not(self.gameManager.inventoryImage.searchInv("coin2")):
+                spr.Collectible((0,0), "coin", "coin2", self.gameManager).collected()
+            if keys[pg.K_3]:
+              if not(self.gameManager.inventoryImage.searchInv("coin3")):
+                spr.Collectible((0,0), "coin", "coin3", self.gameManager).collected()
+            if keys[pg.K_4]:
+              if not(self.gameManager.inventoryImage.searchInv("coin4")):
+                spr.Collectible((0,0), "coin", "coin4", self.gameManager).collected()
+            if keys[pg.K_5]:
+              if not(self.gameManager.inventoryImage.searchInv("coin5")):
+                spr.Collectible((0,0), "coin", "coin5", self.gameManager).collected()
+        if self.gameManager.devMode and keys[pg.K_m]:
+            if keys[pg.K_1]:
+              if not(self.gameManager.inventoryImage.searchInv("map1")):
+                spr.Collectible((0,0), "map", "map1", self.gameManager).collected()
+            if keys[pg.K_2]:
+              if not(self.gameManager.inventoryImage.searchInv("map2")):
+                spr.Collectible((0,0), "map", "map2", self.gameManager).collected()
+            if keys[pg.K_3]:
+              if not(self.gameManager.inventoryImage.searchInv("map3")):
+                spr.Collectible((0,0), "map", "map3", self.gameManager).collected()
+            if keys[pg.K_4]:
+              if not(self.gameManager.inventoryImage.searchInv("map4")):
+                spr.Collectible((0,0), "map", "map4", self.gameManager).collected()
+            if keys[pg.K_5]:
+              if not(self.gameManager.inventoryImage.searchInv("map5")):
+                spr.Collectible((0,0), "map", "map5", self.gameManager).collected()
+              
+        if self.gameManager.devMode and keys[pg.K_t]:
             while True:
                 try:
                     scene = input("What scene? (1, 2, 3, ...) \n")
-                    partX = input("What grid? (x) \n")
-                    partY = input("What grid? (y) \n")
-
-                    self.gameManager.clearLevel()
-                    self.gameManager.sceneIndex[0] = int(scene)
-                    self.gameManager.sceneIndex[1][0] = int(partX)
-                    self.gameManager.sceneIndex[1][1] = int(partY)
-                    return None
-                except:
-                  pass
-            return None
+                    if not(str(scene) == "esc"):
+                        partX = input("What grid? (x) \n")
+                        partY = input("What grid? (y) \n")
+                        self.gameManager.clearLevel()
+                        self.gameManager.sceneIndex = [0, [0,0]]
+                        self.gameManager.sceneIndex[0] = int(scene)
+                        self.gameManager.sceneIndex[1][0] = int(partX)
+                        self.gameManager.sceneIndex[1][1] = int(partY)
+                        return None
+                    break
+                except Exception as e:
+                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                    message = template.format(type(e).__name__, e.args)
+                    print(message)
         self.screen.blit(self.surface, (0, 0))
         pg.draw.rect(self.surface, (0, 0, 0, 100), [
             0, 0, self.gameManager.screenWidth, self.gameManager.screenHeight
@@ -152,6 +207,8 @@ class scene:
 
       if not (self.gameManager.Player.alive): ########### if player dies ###############
         keys = pg.key.get_pressed()
+        if keys[pg.K_z]:
+          self.gameManager.Player.alive = True
         if keys[pg.K_r] or restart:
             restart = False
             if not(self.gameManager.shadow):
@@ -223,25 +280,9 @@ def gameLoop(gameManager, scenes, start=[0,0]):
                      gameManager.screenHeight // gameManager.tileSize[1]),
                      gameManager))
 
+  map_group = (spr.Collectible((11, 6), "map", "map" + str(gameManager.sceneIndex[0]), gameManager))
 
-  all_sprites.add(background, kill_shadow)
-  if gameManager.sceneIndex[0] == 5:
-    mapImage = Image.open(
-      "sprites/Maps/map5.png")
-    mapImage.thumbnail((gameManager.tileSize[0] * 8, gameManager.tileSize[1] * 8))
-    mapImage.save("sprites/Maps/NMap5.png")
-    map = spr.Sprite(pg.image.load("sprites/Maps/NMap5.png"), (gameManager.screenWidth // 2,
-    gameManager.screenHeight // 2), gameManager, False)
-    all_sprites.add(map)
-  elif gameManager.sceneIndex[0] == 4:
-    mapImage = Image.open(
-      "sprites/Maps/map4.png")
-    mapImage.thumbnail((gameManager.tileSize[0] * 8, gameManager.tileSize[1] * 8))
-    mapImage.save("sprites/Maps/NMap4.png")
-    map = spr.Sprite(pg.image.load("sprites/Maps/NMap4.png"), (gameManager.screenWidth // 2,
-    gameManager.screenHeight // 2), gameManager, False)
-    all_sprites.add(map)
-  all_sprites.add(gameManager.Player)
+  all_sprites.add(background, kill_shadow, map_group, gameManager.Player)
   voidEnd = scene(gameManager, all_sprites)
 
   sceneParts = scenes
@@ -254,6 +295,7 @@ def gameLoop(gameManager, scenes, start=[0,0]):
     try:
       if gameManager.sceneIndex[1][0] < 0 or gameManager.sceneIndex[1][1] < 0:
           raise IndexError
+      gameManager.shadow = False
       temp = sceneParts[gameManager.sceneIndex[1][0]][gameManager.sceneIndex[1][1]].main()
       if temp is None:
         return None
@@ -270,9 +312,11 @@ def gameLoop(gameManager, scenes, start=[0,0]):
     except IndexError:
       gameManager.sceneIndex[1][0] = -1
       gameManager.sceneIndex[1][1] = -1
-      if shadowTimer % 10 == 0:
+      if shadowTimer % 7 == 0:
+        gameManager.shadow = True
         temp = voidEnd.main()
       else:
+        gameManager.shadow = True
         temp = scene_void.main()
       if temp == "reset":
         gameManager.shadow = False

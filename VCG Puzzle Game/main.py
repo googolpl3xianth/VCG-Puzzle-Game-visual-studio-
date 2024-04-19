@@ -23,10 +23,7 @@ def main():
   pg.init()
   while True:
     gameManager.clearLevel()
-    #try:
     scenes[gameManager.sceneIndex[0]].main(gameManager)
-    #except IndexError or TypeError:
-      #void(gameManager)
 
 
 def void(gameManager):
