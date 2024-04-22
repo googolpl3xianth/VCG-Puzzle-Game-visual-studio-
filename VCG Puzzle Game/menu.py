@@ -2,6 +2,8 @@ from PIL import Image
 from sys import exit
 import pygame as pg
 import sprites as spr
+from shader import Shader, update_shader
+import moderngl
 
 
 def main(gameManager):  # starting scene
@@ -9,7 +11,7 @@ def main(gameManager):  # starting scene
   pg.display.set_caption('menu')
 
   screen = pg.display.set_mode(
-      (gameManager.screenWidth, gameManager.screenHeight))
+      (gameManager.screenWidth, gameManager.screenHeight), pg.OPENGL | pg.DOUBLEBUF)
   surface = pg.Surface((gameManager.screenWidth, gameManager.screenHeight),
                        pg.SRCALPHA)
   clock = pg.time.Clock()
@@ -24,6 +26,9 @@ def main(gameManager):  # starting scene
 
   all_sprites = pg.sprite.Group()
   all_sprites.add(background, button)
+
+  shader = Shader()
+  t = 0
 
   run = True
   transparency = 255
@@ -70,6 +75,9 @@ def main(gameManager):  # starting scene
     elif not (run) and transparency == 255:
       gameManager.sceneIndex[0] = 1
       return None
+
+    t += 1
+    update_shader(shader, screen, t)
 
     pg.display.flip()  # updates screen
 
