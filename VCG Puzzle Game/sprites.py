@@ -626,7 +626,6 @@ class DialogueManager(Sprite): ########## dialogueManager ###########
     
 
 class inventoryImage(Sprite): ############### inventoryImage #################
-  
     def __init__(self, manager, *groups):
       self.manager = manager
       self.font = pg.font.Font('freesansbold.ttf', round(manager.tileSize[1]))
@@ -713,6 +712,7 @@ class Item(Sprite): ############ Item #################
         self.num += 1
         self.names.append(collectible.name)
         self.image = collectible.image
+
 
 class Collectible(Collider):  ####### Collectible #########
 
@@ -933,6 +933,7 @@ class Cage(Collider): ################## cage ################
     def addSelf(self, manager):
        manager.cage = self
 
+
 class text(Collider):  ################ text ###############
 
   def __init__(self, pos, width, text, manager, textSize=.5, textColor=(0,0,0), font='freesansbold.ttf', *groups):
@@ -994,7 +995,6 @@ class text(Collider):  ################ text ###############
 
   def addSelf(self, manager):
     manager.text_group.add(self)
-
 
 
 class Conveyor(Collider): ############## conveyor ##############
@@ -1584,5 +1584,3 @@ class Grid: ################ grid ###################
           pg.draw.line(screen, (0, 0, 0), (i * self.manager.tileSize[0], 0), (i * self.manager.tileSize[0], self.manager.screenHeight))
         for i in range(round(self.manager.screenHeight / self.manager.tileSize[1])):
           pg.draw.line(screen, (0, 0, 0), (0, i * self.manager.tileSize[1]), (self.manager.screenWidth, i * self.manager.tileSize[1]))
-
-

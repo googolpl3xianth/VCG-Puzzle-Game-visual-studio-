@@ -39,8 +39,8 @@ class Shader:
         in vec2 uvs;
         out vec4 f_color;
 
-        const float noiseIntensity = 0.1;    // Intensity of noise
-        const float distortionIntensity = 0.0003; // Intensity of distortion
+        const float noiseIntensity = 0.2;    // Intensity of noise
+        const float distortionIntensity = 0.001; // Intensity of distortion
         const float aspectRatio = 4.0 / 4; // Target aspect ratio
         const float screenScale = 1;
 
