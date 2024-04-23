@@ -3,13 +3,14 @@ from PIL import Image
 from PIL.ImageFilter import FIND_EDGES
 import pygame as pg
 import pickle
+import os.path
 
 pg.init()
 screen = pg.display.set_mode((1,1))
 
 devMode = True
 
-def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager):
+def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager): ################# spriteSheet #############
     frames = []
     i = 0 
     spriteImage = pg.image.load(image).convert_alpha()
@@ -44,6 +45,7 @@ class GameManager:  ########## Game manager #########
     self.shadow = False
     self.Player = Player
     self.cage = None
+    self.saveState = saveState(self)
     self.undoManager = undoManager(self)
     self.inventoryImage = inventoryImage(self)
     self.dialogueManager = DialogueManager(self)
@@ -95,8 +97,10 @@ class GameManager:  ########## Game manager #########
             self.complexCollision(guard)
     self.boxPush()
     self.undoManager.addActionMovement()
-    self.conveyorPush()
+    if self.conveyorPush():
+        self.undoManager.addActionConveyor()
     self.collisionReset()
+    
 
                         
     player_switch = pg.sprite.spritecollide(self.Player, self.switch_group, False) # player * switch
@@ -177,6 +181,7 @@ class GameManager:  ########## Game manager #########
         self.Player.collidingreal = False
         
     self.undoManager.addActionStatus()
+    self.undoManager.addFrame()
 
   def gameCollision(self, obj):
     obj.pos_float[0] = (obj.preX)
@@ -309,7 +314,7 @@ class GameManager:  ########## Game manager #########
                 self.gamePush(box1, box2)
                 self.complexCollision(box2)
                 push = True
-                if not(box1.pos_float[0] == box1.preX and box1.pos_float[1] == box1.preY):
+                if not(box1.pos_float[0] == box1.preX and box1.pos_float[1] == box1.preY) and not(box2.pos_float[0] == box2.preX and box2.pos_float[1] == box2.preY):
                     self.boxPush()
                     
     self.collisionReset()
@@ -317,6 +322,7 @@ class GameManager:  ########## Game manager #########
     return push
         
   def conveyorPush(self):
+    boxPushed = False
     player_conveyor = pg.sprite.spritecollide(self.Player, self.conveyor_group, False) # player * conveyor
     if len(player_conveyor) == 1:
         for conveyor in player_conveyor:
@@ -325,7 +331,8 @@ class GameManager:  ########## Game manager #########
             else:   
                 conveyor.move(self.Player)
                 self.complexCollision(self.Player)
-                self.boxPush()
+                if self.boxPush():
+                   boxPushed = True
     elif len(player_conveyor) > 1:
         tempArray = [0, 0]
         tempArray[0] = self.Player.pos_float[0]
@@ -336,7 +343,8 @@ class GameManager:  ########## Game manager #########
             else:
                 conveyor.move(self.Player)
                 self.complexCollision(self.Player)
-                self.boxPush()
+                if self.boxPush():
+                   boxPushed = True
         if not(tempArray[0] == self.Player.pos_float[0] and tempArray[1] == self.Player.pos_float[1]):
             self.gameCollision(self.Player)
    
@@ -348,7 +356,8 @@ class GameManager:  ########## Game manager #########
             else:            
                 conveyors[0].move(box)
                 self.complexCollision(box)
-                self.boxPush()
+                if self.boxPush():
+                   boxPushed = True
         elif len(conveyors) > 1:
             tempArray = [0, 0]
             tempArray[0] = box.pos_float[0]
@@ -359,7 +368,8 @@ class GameManager:  ########## Game manager #########
                 else:
                     conveyor.move(box)
                     self.complexCollision(box)
-                    self.boxPush()
+                    if self.boxPush():
+                       boxPushed = True
             if not(tempArray[0] == box.pos_float[0] and tempArray[1] == box.pos_float[1]):
                 self.gameCollision(box)
               
@@ -384,25 +394,47 @@ class GameManager:  ########## Game manager #########
                         self.complexCollision(guard)
                 if not(tempArray[0] == guard.pos_float[0] and tempArray[1] == guard.pos_float[1]):
                     self.gameCollision(guard)
+    return boxPushed
              
  
 class saveState: ########## saveState ###########
     def __init__(self, gameManager):
-       self.maanager = gameManager
-       self.sceneIndex = None
-       self.playerPos = None
-       self.all_sprites = None
-       self.keys = None
-       self.coins = None
-       self.maps = None
+       self.manager = gameManager
+       self.saveSprites = None
        
     def save(self):
-       self.sceneIndex = self.manager.sceneIndex
-       self.playerPos = self.manager.Player.pos_float
-       self.all_sprites = self.maanager.all_sprites
-       self.keys = self.manager.inventoryImage.keys
-       self.coins = self.manager.inventoryImage.coins
-       self.maps = self.manager.inventoryImage.maps
+       print("save")
+       allSpriteData = []
+       for box in self.manager.box_group:
+           allSpriteData.append([box.initPos, box.pos_float])
+       for guard in self.manager.guard_group:
+           allSpriteData.append([guard.initPos, guard.pos_float])
+       for switch in self.manager.switch_group:
+           allSpriteData.append([switch.initPos, switch.on])
+       for switchWall in self.manager.switchWall_group:
+           allSpriteData.append([switchWall.initPos, switchWall.on])
+             
+       data = [self.manager.sceneIndex, 
+               self.manager.Player.pos_float,
+               self.manager.inventoryImage.keys.names,
+               self.manager.inventoryImage.coins.names,
+               self.manager.inventoryImage.maps.names,
+               allSpriteData]
+       with open('savefile.dat', 'wb') as f:
+           pickle.dump(data, f)
+           
+    def load(self):
+        if os.path.isfile('savefile.dat'):
+            with open('savefile.dat', 'rb') as f:
+                self.manager.sceneIndex, player_pos_float, self.manager.inventoryImage.keys.names, self.manager.inventoryImage.coins.names,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
+                self.manager.Player.setPos(player_pos_float[0], player_pos_float[1], False)
+                self.manager.inventoryImage.keys.num = len(self.manager.inventoryImage.keys.names)
+                self.manager.inventoryImage.coins.num = len(self.manager.inventoryImage.coins.names)
+                self.manager.inventoryImage.maps.num = len(self.manager.inventoryImage.maps.names)
+            return True           
+        else:
+           print("no save file")
+           return False
        
 
 class undoManager: ############ undo manager #############
@@ -424,10 +456,15 @@ class undoManager: ############ undo manager #############
                  if action[3] is not None and not(action[3].playerColliding):
                     action[3].playerColliding = True
                  action[0].direction = action[2]
+                 action[0].shadow = action[4]
+                 action[0].collidingreal = action[5]
              elif action[0] in self.manager.box_group:
                  self.setPos(action[0], action[1])
+                 for switch in self.manager.switch_group:
+                    if action[0] in switch.boxColliding:
+                        switch.boxColliding.remove(action[0])
                  if action[2] is not None and action[0] not in action[2].boxColliding:
-                    action[2].boxColliding.append(action[0])
+                    action[2].boxColliding.append(action[0])    
              elif action[0] in self.manager.guard_group:
                  if isinstance(action[1], (int)):
                      if action[1]:
@@ -441,7 +478,12 @@ class undoManager: ############ undo manager #############
                      action[0].turn = action[4]
                      action[0].cooldown = action[5]
                      action[0].updateVision()
-             else:
+                     for switch in self.manager.switch_group:
+                        if action[0] in switch.guardColliding:
+                            switch.guardColliding.remove(action[0])
+                     if action[6] is not None and action[0] not in action[6].guardColliding:
+                        action[6].guardColliding.append(action[0])
+             elif action[0] in self.manager.switch_group:
                 action[0].switchValues()
           self.sprite_actions.pop()
 
@@ -463,30 +505,51 @@ class undoManager: ############ undo manager #############
           for switch in self.manager.switch_group:
              if switch.playerColliding:
                 collidedSwitches = switch
-          self.frame.append([self.manager.Player, [self.manager.Player.preX, self.manager.Player.preY], self.manager.Player.preDirection, collidedSwitches])
+          self.frame.append([self.manager.Player, [self.manager.Player.preX, self.manager.Player.preY], self.manager.Player.preDirection, collidedSwitches, self.manager.Player.preShadow, self.manager.Player.collidingreal])
       for box in self.manager.box_group:
          if not(box.preX == box.pos_float[0] and box.preY == box.pos_float[1]):
             switchCollide = None
             for switch in self.manager.switch_group:
                 if box in switch.boxColliding:
                     switchCollide = switch
-                   
             self.frame.append([box, [box.preX, box.preY], switchCollide])
       if len(self.frame) > 0:
          for guard in self.manager.guard_group:
-             self.frame.append([guard, [guard.preX, guard.preY], guard.preImage, guard.preCover, guard.preTurn, guard.preCooldown])
+            switchCollide = None
+            for switch in self.manager.switch_group:
+                if guard in switch.guardColliding:
+                    switchCollide = switch
+                    break
+                else:
+                    pass
+            self.frame.append([guard, [guard.preX, guard.preY], guard.preImage, guard.preCover, guard.preTurn, guard.preCooldown, switchCollide])
    
    def addActionStatus(self):
       for switch in self.manager.switch_group:
          if not(switch.preOn == switch.on):
-            self.frame.append([switch, switch.preOn])    
+            self.frame.append([switch])  
+            print(self.frame)
       for guard in self.manager.guard_group:
           if not(guard.preAlive == guard.alive):
             self.frame.append([guard, guard.preAlive])
+        
+   def addActionConveyor(self):
+      if len(self.frame) > 0:
+          for box in self.manager.box_group:
+             if not(box.preX == box.pos_float[0] and box.preY == box.pos_float[1]):
+                switchCollide = None
+                for switch in self.manager.switch_group:
+                    if box in switch.boxColliding:
+                        switchCollide = switch
+                self.frame.append([box, [box.preX, box.preY], switchCollide])
+  
+   def addFrame(self):
       if not(len(self.frame) == 0):
         self.sprite_actions.append(self.frame)
         self.frame = []
-      
+      if len(self.sprite_actions) > 100:
+         self.sprite_actions.pop(0)
+
 
 class Sprite(pg.sprite.Sprite):  ######### sprite #########
 
@@ -740,7 +803,6 @@ class Collectible(Collider):  ####### Collectible #########
     self.manager = manager
     super().__init__(image, pos, manager, *groups)
     
-
   def collected(self):
     if self.type == "map" and not(self.manager.inventoryImage.searchMap()):
        self.manager.dialogueManager.setText("press 'M' to open the map. ('ENTER' to close dialogue)")
@@ -760,7 +822,6 @@ class Collectible(Collider):  ####### Collectible #########
         self.kill()
     else:
         manager.collect_group.add(self)
-
 
   def animate(self):
     if not(self.inInventory):
@@ -785,14 +846,15 @@ class Player(Collider):  ############ player ##############
     shadowImage.save("sprites/Player/SPShadow.png")
     shadowPlayerImage = pg.transform.scale(pg.image.load("sprites/Player/SPShadow.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
-    self.preX = pos[0]
-    self.preY = pos[1]
-    self.pos_float = [pos[0], pos[1]]
+    self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - playerImage.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - playerImage.get_height() / 2]
+    self.preX = self.pos_float[0]
+    self.preY = self.pos_float[1]
 
     super().__init__(playerImage, pos, manager,
                      *groups)
     self.collidingreal = False
     self.shadow = False
+    self.preShadow = self.shadow
     self.alive = True
 
     self.direction = "E"
@@ -824,6 +886,7 @@ class Player(Collider):  ############ player ##############
     self.preX = self.pos_float[0]
     self.preY = self.pos_float[1]
     self.preDirection = self.direction
+    self.preShadow = self.shadow
     keys = pg.key.get_pressed()
 
     if not (keys[pg.K_w]) and not (keys[pg.K_a]) and not (
@@ -909,13 +972,19 @@ class Player(Collider):  ############ player ##############
     self.image = self.frames[round((self.clock / numFrames)) % len(self.frames)]
     super().animate()
 
-  def setPos(self, x, y):
-    if x is not None:
-        self.rect.x = (x + .5) * self.manager.tileSize[0] - self.rect.width / 2
-        self.pos_float[0] = (x + .5) * self.manager.tileSize[0] - self.rect.width / 2
-    if y is not None:
-        self.rect.y = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
-        self.pos_float[1] = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
+  def setPos(self, x, y, scaled=True):
+    if scaled:
+        if x is not None:
+            self.rect.x = (x + .5) * self.manager.tileSize[0] - self.rect.width / 2
+            self.pos_float[0] = (x + .5) * self.manager.tileSize[0] - self.rect.width / 2
+        if y is not None:
+            self.rect.y = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
+            self.pos_float[1] = (y + .5) * self.manager.tileSize[1] - self.rect.height / 2
+    else:
+        self.pos_float[0] = x
+        self.pos_float[1] = y
+        self.rect.x = x
+        self.rect.y = y
 
   def draw(self, screen):
     if not(self.hide):
@@ -923,8 +992,7 @@ class Player(Collider):  ############ player ##############
             screen.blit(self.image, self.rect)
         
 
-class Cage(Collider): ################## cage ################
-   
+class Cage(Collider): ################## cage ################ 
     def __init__(self, pos, manager, *groups):
         image = pg.transform.scale(pg.image.load("sprites/Cage/cage.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]), )
         self.pos = pos
@@ -1028,8 +1096,6 @@ class Conveyor(Collider): ############## conveyor ##############
     manager.conveyor_group.add(self)
 
   def animate(self):
-
-        
     if not(self.on):
         self.frameNum = 0
     else:
@@ -1094,7 +1160,6 @@ class visionCone(Collider): ############### guardVision ########
 
 
 class Guard(Collider):  ############ guard ############
-
   def __init__(self,
                pos,
                distance,
@@ -1103,7 +1168,10 @@ class Guard(Collider):  ############ guard ############
                hor=True,
                *groups):
     image = pg.transform.scale(pg.image.load("sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
-
+    
+    self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2]
+    self.initPos = [self.pos_float[0], self.pos_float[1]]
+    
     self.distance = distance
     self.cover = 0
     self.preCover = 0
@@ -1114,7 +1182,6 @@ class Guard(Collider):  ############ guard ############
 
     self.preX = (pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2
     self.preY = (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2
-    self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2]
 
     self.cooldown = 0
     self.preCooldown = 0
@@ -1236,20 +1303,20 @@ class Guard(Collider):  ############ guard ############
 
 
 class Box(Collider):  ############### box ################
-
   def __init__(self, pos, shadow, manager, *groups):
     if not shadow:
         image = pg.transform.scale(pg.image.load("sprites/Boxes/NewBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     else:
         image = pg.transform.scale(pg.image.load("sprites/Boxes/NewSBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
+    self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2]
+    self.initPos = [self.pos_float[0], self.pos_float[1]]
     self.shadow = shadow
 
     super().__init__(image, pos, manager, shadow, *groups)
 
     self.preX = self.rect.x
     self.preY = self.rect.y
-    self.pos_float = [self.rect.x, self.rect.y]
 
     self.pushed = False
 
@@ -1263,7 +1330,6 @@ class Box(Collider):  ############### box ################
 
 
 class Switch(Collider):  ############ switch #############
-
   def __init__(self, pos, switchWalls, manager, *groups):
     redSwitchOff = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
     redSwitchOn = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
@@ -1286,7 +1352,7 @@ class Switch(Collider):  ############ switch #############
       image = self.frames[2][0]
 
     super().__init__(image, pos, manager, *groups)
-
+    self.initPos = [self.rect.x, self.rect.y]
     self.switchWall_group = pg.sprite.Group(switchWalls)
     self.playerColliding = False
     self.boxColliding = []
@@ -1312,8 +1378,7 @@ class Switch(Collider):  ############ switch #############
         j = 0
 
     self.image = self.frames[i][j]
-
-
+    
   def switchValues(self):
     self.on = not (self.on)
     for switchWall in self.switchWall_group:
@@ -1321,7 +1386,6 @@ class Switch(Collider):  ############ switch #############
 
 
 class switchWall(Collider):  ############ switchWall ######
-
   def __init__(self, pos, color, on, manager, *groups):
     redSwitchWallOff = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
     redSwitchWallOn = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
@@ -1350,6 +1414,7 @@ class switchWall(Collider):  ############ switchWall ######
     self.preOn = on
 
     super().__init__(image, pos, manager, True)
+    self.initPos = [self.rect.x, self.rect.y]
     
     self.update()
 
@@ -1374,7 +1439,6 @@ class switchWall(Collider):  ############ switchWall ######
 
 
 class Door(Collider):  ############# door ###########
-
   def __init__(self, pos, direction, returnIndex, item, manager,
                *groups):
     doorImage = pg.transform.scale(pg.image.load("sprites/Doors/door.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1] * 2))
@@ -1472,7 +1536,6 @@ class killShadow(Collider):  ########### kill shadow ########
 
 
 class Wall(Collider):  ############# wall  ##################
-
   def __init__(self, pos, vertical, num, shadow, manager, *groups):
 
     wallImage = Image.open("sprites/Walls/wall.png")
@@ -1536,7 +1599,6 @@ class Wall(Collider):  ############# wall  ##################
 
 
 class Background(Sprite):  ##########  BG  ###############
-
   def __init__(self, image, manager, tile=True):
     if not tile:
       image = pg.image.load(image).convert_alpha()
@@ -1551,7 +1613,6 @@ class Background(Sprite):  ##########  BG  ###############
         super().__init__(image, (0,0), manager)
     else:
         super().__init__(image, (manager.screenWidth / 2, manager.screenHeight / 2), manager, False)
-
 
   def draw(self, screen):
     if self.tile:

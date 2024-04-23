@@ -78,6 +78,27 @@ class scene:
 
     for sprite in self.all_sprites:
       sprite.addSelf(self.gameManager)
+    
+    if self.gameManager.saveState.saveSprites is not None:
+        for saveSprite in self.gameManager.saveState.saveSprites:
+            for box in self.gameManager.box_group:
+                if box.pos_float == saveSprite[0]:
+                    box.pos_float = saveSprite[1]
+                    box.rect.x = round(box.pos_float[0])
+                    box.rect.y = round(box.pos_float[1])
+            for guard in self.gameManager.guard_group:
+                if guard.pos_float == saveSprite[0]:
+                    guard.pos_float = saveSprite[1]
+                    guard.rect.x = round(guard.pos_float[0])
+                    guard.rect.y = round(guard.pos_float[1])
+            for switch in self.gameManager.switch_group:
+                if [switch.rect.x, switch.rect.y] == saveSprite[0]:
+                    switch.on = saveSprite[1]
+            for switchWall in self.gameManager.switchWall_group:
+                if [switchWall.rect.x, switchWall.rect.y] == saveSprite[0]:
+                    switchWall.on = saveSprite[1]
+        self.gameManager.saveState.saveSprites = None
+                        
 
 
     tempShadow = self.gameManager.shadow
@@ -93,6 +114,7 @@ class scene:
       for event in pg.event.get():  # closes window
 
         if event.type == pg.QUIT:
+          self.gameManager.saveState.save()
           pg.quit()
           exit()
         elif event.type == pg.KEYDOWN:
@@ -106,6 +128,7 @@ class scene:
       pg.event.pump()
       if transparency == 0 and not (menu) and returnValue is None and self.gameManager.Player.alive:
         self.all_sprites.update()
+        self.gameManager.checkCollisions()
         if self.gameManager.Player.rect.x > self.gameManager.screenWidth - self.gameManager.Player.rect.width: ###### player changing rooms ###########
           returnValue = [1, 0]
         elif self.gameManager.Player.rect.x + self.gameManager.Player.rect.width < 0:
@@ -114,7 +137,6 @@ class scene:
           returnValue = [0, 1]
         elif self.gameManager.Player.rect.y + self.gameManager.Player.rect.height < 0:
           returnValue = [0, -1]
-        self.gameManager.checkCollisions()
       for door in self.gameManager.door_group: ############## check if player is going through a door ################
         if door.open(self.gameManager):
           self.gameManager.Player.setPos(door.playerPos[0], door.playerPos[1])
