@@ -528,7 +528,6 @@ class undoManager: ############ undo manager #############
       for switch in self.manager.switch_group:
          if not(switch.preOn == switch.on):
             self.frame.append([switch])  
-            print(self.frame)
       for guard in self.manager.guard_group:
           if not(guard.preAlive == guard.alive):
             self.frame.append([guard, guard.preAlive])
