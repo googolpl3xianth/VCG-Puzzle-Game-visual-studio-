@@ -14,10 +14,14 @@ def main(gameManager):  # starting scene
                        pg.SRCALPHA)
   clock = pg.time.Clock()
 
-  button = spr.Button("sprites/Buttons/startButton.png",
+  button = (spr.Button("sprites/Buttons/startButton.png",
                       (gameManager.screenWidth / 2,
                       gameManager.screenHeight / 2),
-                      gameManager, False)  # start button
+                      gameManager, False),
+            spr.Button("sprites/Misc/dialogueBox.png", 
+                       (gameManager.screenWidth / 2, 
+                       gameManager.tileSize[1] * 3 + gameManager.screenHeight / 2), 
+                       gameManager, False))  # start button
 
 
   background = spr.Background("sprites/BGs/titleScreen.jpg", gameManager, False)
@@ -34,8 +38,12 @@ def main(gameManager):  # starting scene
         pg.quit()
         exit()
 
-    if (button.isClick()):  # checks if start button is clicked
-        run = False  # tells main to add 1 to scene index
+    if (button[0].isClick()):  # checks if start button is clicked
+        run = False
+        gameManager.sceneIndex[0] = 1
+    if (button[1].isClick()):  # checks if start button is clicked
+        if gameManager.saveState.load():
+            run = False
 
     for sprite in all_sprites:
       sprite.draw(screen)
@@ -68,7 +76,6 @@ def main(gameManager):  # starting scene
       if transparency > 255:
         transparency = 255
     elif not (run) and transparency == 255:
-      gameManager.sceneIndex[0] = 1
       return None
 
     pg.display.flip()  # updates screen
