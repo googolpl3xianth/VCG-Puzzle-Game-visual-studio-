@@ -777,9 +777,9 @@ class Collectible(Collider):  ####### Collectible #########
 class Player(Collider):  ############ player ##############
 
   def __init__(self, pos, manager, *groups):
-    playerImage = pg.transform.scale(pg.image.load("sprites/Player/Player.jpeg").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
-
-    shadowImage = Image.open("sprites/Player/Player.jpeg")
+    # made player file png
+    playerImage = pg.transform.scale(pg.image.load("sprites/Player/Player.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
+    shadowImage = Image.open("sprites/Player/Player.png")
     shadowImage = shadowImage.filter(FIND_EDGES)
     shadowImage.putalpha(128)
     shadowImage.save("sprites/Player/SPShadow.png")
