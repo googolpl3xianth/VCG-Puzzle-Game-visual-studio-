@@ -28,7 +28,7 @@ def main():
 
 def void(gameManager):
   all_sprites = pg.sprite.Group()
-  background = spr.Background("sprites/BGs/blackBG.png", gameManager, False)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/blackBG.png", gameManager, False)
   kill_shadow = (spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0], gameManager.screenHeight / gameManager.tileSize[1]), gameManager))
   all_sprites.add(background, kill_shadow, gameManager.Player)
 

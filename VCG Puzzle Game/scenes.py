@@ -295,7 +295,7 @@ def gameLoop(gameManager, scenes, start=[0,0]):
 
   ################ void #################
   all_sprites = pg.sprite.Group()
-  background = spr.Background("sprites/BGs/blackBG.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/blackBG.png", gameManager)
   kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth // gameManager.tileSize[0],
                      gameManager.screenHeight // gameManager.tileSize[1]),
