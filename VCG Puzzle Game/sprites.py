@@ -528,11 +528,9 @@ class undoManager: ############ undo manager #############
       for switch in self.manager.switch_group:
          if not(switch.preOn == switch.on):
             self.frame.append([switch])  
-            print(self.frame)
       for guard in self.manager.guard_group:
           if not(guard.preAlive == guard.alive):
             self.frame.append([guard, guard.preAlive])
-        
    def addActionConveyor(self):
       if len(self.frame) > 0:
           for box in self.manager.box_group:
@@ -601,8 +599,8 @@ class Collider(Sprite):  ########## collider #############
 class DialogueManager(Sprite): ########## dialogueManager ###########
 
     def __init__(self, manager):
-       self.image = pg.transform.scale(pg.image.load("sprites/Misc/dialogueBox.png").convert_alpha(), (manager.screenWidth - manager.tileSize[0], 4.5 * manager.tileSize[1]))
-       self.speakerImage = pg.transform.scale(pg.image.load("sprites/Misc/speakerBox.png").convert_alpha(), (manager.tileSize[0] * 2.5, manager.tileSize[1] * .75))
+       self.image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Misc/dialogueBox.png").convert_alpha(), (manager.screenWidth - manager.tileSize[0], 4.5 * manager.tileSize[1]))
+       self.speakerImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Misc/speakerBox.png").convert_alpha(), (manager.tileSize[0] * 2.5, manager.tileSize[1] * .75))
        super().__init__(self.image, None, manager)
        
        self.rect.x = manager.tileSize[0] * .5
@@ -697,9 +695,9 @@ class inventoryImage(Sprite): ############### inventoryImage #################
       manager.inventoryImage = self
 
       self.collectibles = pg.sprite.Group()
-      self.keys = Item(pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
-      self.coins = Item(pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
-      self.maps = Item(pg.transform.scale(pg.image.load("sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
+      self.keys = Item(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
+      self.coins = Item(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
+      self.maps = Item(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
       self.collectibles.add(self.keys, self.coins, self.maps)
       self.showMap = False
 
@@ -741,7 +739,7 @@ class inventoryImage(Sprite): ############### inventoryImage #################
     def draw(self, screen):
       i = 0
       if self.showMap:
-        tempImage = pg.transform.scale(pg.image.load("sprites/Maps/map" + str(self.manager.sceneIndex[0]) + ".png").convert_alpha(), (self.manager.tileSize[0] * 11, self.manager.tileSize[1] * 6))
+        tempImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Maps/map" + str(self.manager.sceneIndex[0]) + ".png").convert_alpha(), (self.manager.tileSize[0] * 11, self.manager.tileSize[1] * 6))
         tempRect = tempImage.get_rect()
         tempRect.center = [self.manager.screenWidth // 2, self.manager.screenHeight // 2]
         screen.blit(tempImage, tempRect)
@@ -782,16 +780,16 @@ class Collectible(Collider):  ####### Collectible #########
 
   def __init__(self, pos, collectType, name, manager, *groups):
     if collectType == "key":
-        image = pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1]))
+        image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1]))
         self.frames = [image]
     elif collectType == "coin":
-        self.frames = spriteSheet("sprites/Collectibles/coin.png", 32, 32, 10, manager)
+        self.frames = spriteSheet("VCG Puzzle Game/sprites/Collectibles/coin.png", 32, 32, 10, manager)
         image = self.frames[0]
     elif collectType == "map":
-        image = pg.transform.scale(pg.image.load("sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+        image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
         self.frames = [image]
     else:
-        image = pg.transform.scale(pg.image.load("sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],
+        image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],
             manager.tileSize[1]))
         self.frames = [image]
 
@@ -839,13 +837,13 @@ class Collectible(Collider):  ####### Collectible #########
 class Player(Collider):  ############ player ##############
 
   def __init__(self, pos, manager, *groups):
-    playerImage = pg.transform.scale(pg.image.load("sprites/Player/Player.jpeg").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
+    playerImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Player/Player.jpeg").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
-    shadowImage = Image.open("sprites/Player/Player.jpeg")
+    shadowImage = Image.open("VCG Puzzle Game/sprites/Player/Player.jpeg")
     shadowImage = shadowImage.filter(FIND_EDGES)
     shadowImage.putalpha(128)
-    shadowImage.save("sprites/Player/SPShadow.png")
-    shadowPlayerImage = pg.transform.scale(pg.image.load("sprites/Player/SPShadow.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
+    shadowImage.save("VCG Puzzle Game/sprites/Player/SPShadow.png")
+    shadowPlayerImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Player/SPShadow.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
     self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - playerImage.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - playerImage.get_height() / 2]
     self.preX = self.pos_float[0]
@@ -995,7 +993,7 @@ class Player(Collider):  ############ player ##############
 
 class Cage(Collider): ################## cage ################ 
     def __init__(self, pos, manager, *groups):
-        image = pg.transform.scale(pg.image.load("sprites/Cage/cage.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]), )
+        image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Cage/cage.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]), )
         self.pos = pos
         super().__init__(image, pos, manager, False, True, *groups)
         
@@ -1008,7 +1006,7 @@ class text(Collider):  ################ text ###############
   def __init__(self, pos, width, text, manager, textSize=.5, textColor=(0,0,0), font='freesansbold.ttf', *groups):
 
     self.manager = manager
-    image = pg.transform.scale(pg.image.load("sprites/Misc/textBubble.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Misc/textBubble.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
     self.font = pg.font.Font(font, round(textSize * manager.tileSize[1]))
 
     self.text = text
@@ -1068,7 +1066,7 @@ class text(Collider):  ################ text ###############
 
 class Conveyor(Collider): ############## conveyor ##############
   def __init__(self, pos, direction, manager, *groups):
-    self.frames = spriteSheet("sprites/Conveyors/conveyorSpriteSheet.png", 32, 32, 4, manager)
+    self.frames = spriteSheet("VCG Puzzle Game/sprites/Conveyors/conveyorSpriteSheet.png", 32, 32, 4, manager)
     
     self.clock = 0
     self.frameNum = 0
@@ -1138,7 +1136,7 @@ class Conveyor(Collider): ############## conveyor ##############
 class Spike(Collider): ############### spike ###############
 
   def __init__(self, pos, manager, grid=True, *groups):
-    image = pg.transform.scale(pg.image.load("sprites/Enemies/spike.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Enemies/spike.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
     super().__init__(image, pos, manager, grid, *groups)
 
@@ -1149,7 +1147,7 @@ class Spike(Collider): ############### spike ###############
 class visionCone(Collider): ############### guardVision ########
 
   def __init__(self, guard):
-    image = pg.transform.scale(pg.image.load("sprites/Enemies/visionCone.png").convert_alpha(), (guard.manager.tileSize[0] * 2, guard.manager.tileSize[1] * 3))
+    image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Enemies/visionCone.png").convert_alpha(), (guard.manager.tileSize[0] * 2, guard.manager.tileSize[1] * 3))
     image = image.copy()
     alpha = 128
     image.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
@@ -1168,7 +1166,7 @@ class Guard(Collider):  ############ guard ############
                manager,
                hor=True,
                *groups):
-    image = pg.transform.scale(pg.image.load("sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
+    image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     
     self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2]
     self.initPos = [self.pos_float[0], self.pos_float[1]]
@@ -1306,9 +1304,9 @@ class Guard(Collider):  ############ guard ############
 class Box(Collider):  ############### box ################
   def __init__(self, pos, shadow, manager, *groups):
     if not shadow:
-        image = pg.transform.scale(pg.image.load("sprites/Boxes/NewBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
+        image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Boxes/NewBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     else:
-        image = pg.transform.scale(pg.image.load("sprites/Boxes/NewSBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
+        image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Boxes/NewSBox.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
 
     self.pos_float = [(pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2, (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2]
     self.initPos = [self.pos_float[0], self.pos_float[1]]
@@ -1332,14 +1330,14 @@ class Box(Collider):  ############### box ################
 
 class Switch(Collider):  ############ switch #############
   def __init__(self, pos, switchWalls, manager, *groups):
-    redSwitchOff = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
-    redSwitchOn = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    redSwitchOff = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/redSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    redSwitchOn = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/redSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    blueSwitchOff = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
-    blueSwitchOn = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    blueSwitchOff = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/blueSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    blueSwitchOn = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/blueSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    greenSwitchOff = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
-    greenSwitchOn = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    greenSwitchOff = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/greenSwitchOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    greenSwitchOn = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/greenSwitchOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
     self.frames = ((redSwitchOff, redSwitchOn), (blueSwitchOff, blueSwitchOn), (greenSwitchOff, greenSwitchOn))
 
@@ -1388,14 +1386,14 @@ class Switch(Collider):  ############ switch #############
 
 class switchWall(Collider):  ############ switchWall ######
   def __init__(self, pos, color, on, manager, *groups):
-    redSwitchWallOff = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
-    redSwitchWallOn = pg.transform.scale(pg.image.load("sprites/Switches/redSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    redSwitchWallOff = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/redSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    redSwitchWallOn = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/redSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    blueSwitchWallOff = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
-    blueSwitchWallOn = pg.transform.scale(pg.image.load("sprites/Switches/blueSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    blueSwitchWallOff = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/blueSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    blueSwitchWallOn = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/blueSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
-    greenSwitchWallOff = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
-    greenSwitchWallOn = pg.transform.scale(pg.image.load("sprites/Switches/greenSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    greenSwitchWallOff = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/greenSwitchWallOff.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    greenSwitchWallOn = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Switches/greenSwitchWallOn.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
     self.frames = ((redSwitchWallOff, redSwitchWallOn), (blueSwitchWallOff, blueSwitchWallOn), (greenSwitchWallOff, greenSwitchWallOn))
 
@@ -1442,7 +1440,7 @@ class switchWall(Collider):  ############ switchWall ######
 class Door(Collider):  ############# door ###########
   def __init__(self, pos, direction, returnIndex, item, manager,
                *groups):
-    doorImage = pg.transform.scale(pg.image.load("sprites/Doors/door.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1] * 2))
+    doorImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Doors/door.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1] * 2))
 
     self.isOpen = False
     self.returnIndex = returnIndex
@@ -1501,7 +1499,7 @@ class Button(Sprite):  ############# button ##################
 class killShadow(Collider):  ########### kill shadow ########
 
   def __init__(self, rect, manager, *groups):
-    image = pg.transform.scale(pg.image.load("sprites/BGs/blackBG.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+    image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/BGs/blackBG.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
     super().__init__(image, (rect[0], rect[1]), manager,
                      *groups)
 
@@ -1509,7 +1507,7 @@ class killShadow(Collider):  ########### kill shadow ########
     self.startx = rect[0]
     self.starty = rect[1]
     self.manager = manager
-    tempImage = Image.open("sprites/BGs/blackBG.png")
+    tempImage = Image.open("VCG Puzzle Game/sprites/BGs/blackBG.png")
 
     self.imageWidth, self.imageHeight = image.get_size()
     self.width = rect[2]
@@ -1539,21 +1537,21 @@ class killShadow(Collider):  ########### kill shadow ########
 class Wall(Collider):  ############# wall  ##################
   def __init__(self, pos, vertical, num, shadow, manager, *groups):
 
-    wallImage = Image.open("sprites/Walls/wall.png")
+    wallImage = Image.open("VCG Puzzle Game/sprites/Walls/wall.png")
     wallImage = wallImage.crop((0, 0, 85, 400))
-    wallImage.save( "sprites/Walls/newWall.png")
+    wallImage.save( "VCG Puzzle Game/sprites/Walls/newWall.png")
 
-    wallImage = Image.open("sprites/Walls/solidWall.png")
+    wallImage = Image.open("VCG Puzzle Game/sprites/Walls/solidWall.png")
     wallImage = wallImage.crop((0, 0, 120, 400))
-    wallImage.save("sprites/Walls/newSWall.png")
+    wallImage.save("VCG Puzzle Game/sprites/Walls/newSWall.png")
 
     self.shadow = shadow
     self.vertical = vertical  # boolean
     self.num = num  # number of walls
     if self.shadow:
-      image = pg.transform.scale(pg.image.load("sprites/Walls/newSWall.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+      image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Walls/newSWall.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
     else:
-      image = pg.transform.scale(pg.image.load("sprites/Walls/newWall.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
+      image = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Walls/newWall.png").convert_alpha(), (manager.tileSize[0], manager.tileSize[1]))
 
     super().__init__(image, pos, manager, shadow, *groups)
     self.startx = pos[0]

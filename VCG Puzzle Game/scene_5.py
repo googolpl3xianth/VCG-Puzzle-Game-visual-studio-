@@ -9,7 +9,7 @@ def main(gameManager):  # first scene
   ##################### a ########################
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((1, 1), gameManager)
-  background = spr.Background("sprites/BGs/edge.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((0, 11), False, 22, True, gameManager),
                 spr.Wall((0, 0), False, 22, True, gameManager),
@@ -29,7 +29,7 @@ def main(gameManager):  # first scene
                 spr.Wall((21, 10), True, 2, True, gameManager))
   door_group = (spr.Door((21, 8), "W", (6, [0, 0]), "key5", gameManager))
 
-  brokenWall = (spr.Sprite(pg.transform.scale(pg.image.load("sprites/Walls/brokenWall.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1])), (0, 11), gameManager))
+  brokenWall = (spr.Sprite(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Walls/brokenWall.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1])), (0, 11), gameManager))
 
   text = [spr.text((10, 6), 16, "The periods of transition are always wrought with struggles", gameManager)]
   all_sprites.add(background, wall_group, brokenWall, gameManager.Player, text,
@@ -100,7 +100,7 @@ def main(gameManager):  # first scene
   ##################### coin ########################
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((21, 11), gameManager)
-  background = spr.Background("sprites/BGs/edge.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((21, 1), True, 9, True, gameManager),
                 spr.Wall((0, 0), False, 19, True, gameManager),
@@ -158,7 +158,7 @@ def main(gameManager):  # first scene
   
   cage = spr.Cage((1, 1), gameManager)
   
-  background = spr.Background("sprites/BGs/edge.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((0, 0), False, 22, True, gameManager),
                 spr.Wall((0, 1), True, 11, True, gameManager),

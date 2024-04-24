@@ -14,17 +14,17 @@ def main(gameManager):  # starting scene
                        pg.SRCALPHA)
   clock = pg.time.Clock()
 
-  button = (spr.Button("sprites/Buttons/startButton.png",
+  button = (spr.Button("VCG Puzzle Game/sprites/Buttons/startButton.png",
                       (gameManager.screenWidth / 2,
                       gameManager.screenHeight / 2),
                       gameManager, False),
-            spr.Button("sprites/Misc/dialogueBox.png", 
+            spr.Button("VCG Puzzle Game/sprites/Misc/dialogueBox.png", 
                        (gameManager.screenWidth / 2, 
                        gameManager.tileSize[1] * 3 + gameManager.screenHeight / 2), 
                        gameManager, False))  # start button
 
 
-  background = spr.Background("sprites/BGs/titleScreen.jpg", gameManager, False)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/titleScreen.jpg", gameManager, False)
 
   all_sprites = pg.sprite.Group()
   all_sprites.add(background, button)

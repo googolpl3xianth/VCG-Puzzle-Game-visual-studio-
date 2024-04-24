@@ -11,7 +11,7 @@ def main(gameManager):  # first scene
   
   cage = spr.Cage((1, 1), gameManager)
 
-  background = spr.Background("sprites/BGs/edge.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((8, 7), False, 4, False, gameManager),
                 spr.Wall((11, 7), True, 5, False, gameManager),
@@ -109,13 +109,13 @@ def main(gameManager):  # first scene
   
   ######################### e #######################
   all_sprites = pg.sprite.Group()
-  background = spr.Background("sprites/BGs/blackBG.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/blackBG.png", gameManager)
   kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth // gameManager.tileSize[0],
                      gameManager.screenHeight // gameManager.tileSize[1]),
                      gameManager))
   text = (spr.text((10, 6), 20, "As long as there is a physical object, you are anchored to the real world", gameManager))
-  tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
+  tempImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
   all_sprites.add(
       background, kill_shadow, spr.Sprite(tempImage, (10,6), gameManager), gameManager.Player, text
   )

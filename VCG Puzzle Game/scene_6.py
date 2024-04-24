@@ -9,7 +9,7 @@ def main(gameManager):  # first scene
   ##################### a ########################
   all_sprites = pg.sprite.Group()
 
-  background = spr.Background("sprites/BGs/blackBG.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/blackBG.png", gameManager)
 
   door_group = (spr.Door((0, 8), "E", (5, [1, 2]), "key5", gameManager))
 

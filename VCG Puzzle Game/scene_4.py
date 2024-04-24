@@ -10,7 +10,7 @@ def main(gameManager):
   ##################### a ########################
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((2, 2), gameManager)
-  background = spr.Background("sprites/BGs/edge.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((4, 1), True, 5, True, gameManager),
                 spr.Wall((4, 7), True, 4, True, gameManager),
@@ -57,7 +57,7 @@ def main(gameManager):
   ############# c #######################
   all_sprites = pg.sprite.Group()
 
-  background = spr.Background("sprites/BGs/edge.png", gameManager)
+  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
 
   kill_shadow = (
       spr.killShadow((0, 0, (gameManager.screenWidth / gameManager.tileSize[0]),
@@ -111,19 +111,19 @@ def main(gameManager):
   
   ################### scene_4_path ###################
   all_sprites = pg.sprite.Group()
-  tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
+  tempImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
   killShadow = spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0],gameManager.screenHeight / gameManager.tileSize[1]), gameManager)
   all_sprites.add(killShadow, spr.Sprite(tempImage, (2,5), gameManager), gameManager.Player)
   scene_4_path1 = scn.scene(gameManager, all_sprites)
   
   all_sprites = pg.sprite.Group()
-  tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
+  tempImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
   killShadow = spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0],gameManager.screenHeight / gameManager.tileSize[1]), gameManager)
   all_sprites.add(killShadow, spr.Sprite(tempImage, (15,9), gameManager), gameManager.Player)
   scene_4_path2 = scn.scene(gameManager, all_sprites)
   
   all_sprites = pg.sprite.Group()
-  tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
+  tempImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
   killShadow = spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0],gameManager.screenHeight / gameManager.tileSize[1]), gameManager)
   all_sprites.add(killShadow, spr.Sprite(tempImage, (7,1), gameManager), gameManager.Player)
   scene_4_path3 = scn.scene(gameManager, all_sprites)
