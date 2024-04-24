@@ -39,9 +39,11 @@ def main(gameManager):
   box_group = (spr.Box((2, 3), True, gameManager), spr.Box((3, 10), True, gameManager))
   collectible_group = (
       spr.Collectible((20, 1), "key", "key3", gameManager))
+  
+  text = (spr.text((20, 3.5), 3, "one cannot have a shift physically without first a shift mentally", gameManager))
 
   all_sprites.add(background, wall_group, conveyor_group, switchWall_group, switch_group, spike_group, box_group,
-                  gameManager.Player, collectible_group, door_group, cage)
+                  gameManager.Player, text, collectible_group, door_group, cage)
 
   scene_3_a = scn.scene(gameManager, all_sprites)
 

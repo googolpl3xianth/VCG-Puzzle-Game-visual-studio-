@@ -15,8 +15,8 @@ def main(gameManager):  # first scene
 
   text_group = (
       spr.text((4, 7), 12, "there are 5 coins to collect",
-               gameManager, 1, (0, 255, 0)),
-      spr.text((4, 5), 12, "scattered at the edges of each past scene", gameManager, 1, (0, 255, 0)))
+               gameManager),
+      spr.text((4, 5), 12, "scattered at the edges of each past scene", gameManager))
 
   kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0],

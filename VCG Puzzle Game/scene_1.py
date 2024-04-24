@@ -17,7 +17,7 @@ def main(gameManager):  # first scene
   mentor = spr.Sprite(mentorImage, (2, 3.5), gameManager, True)
 
   text_group = (
-      spr.text((3, 3), 4, "Use 'SPACE' to enter shadow mode", gameManager),
+      spr.text((3, 3), 4, "Hold 'SPACE' to enter shadow mode", gameManager),
       spr.text((11, 1), 5, "Press 'R' to reset", gameManager))
 
   wall_group = (spr.Wall((6, 0), True, 12, False, gameManager),
@@ -63,7 +63,7 @@ def main(gameManager):  # first scene
   enemy_group = (spr.Guard((6, 8), 2, 8, gameManager))
   text_group = (
       spr.text((4, 3), 12, "be careful of the guard", gameManager),
-      spr.text((4, 2), 12, "press SHIFT to sprint", gameManager))
+      spr.text((4, 2), 12, "hold SHIFT to sprint", gameManager))
 
   all_sprites.add(background, kill_shadow, wall_group, box_group, gameManager.Player,
                   door_group, enemy_group, text_group, cage)
