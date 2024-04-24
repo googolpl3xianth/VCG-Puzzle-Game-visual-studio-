@@ -101,9 +101,7 @@ class GameManager:  ########## Game manager #########
     if self.conveyorPush():
         self.undoManager.addActionConveyor()
     self.collisionReset()
-    
-
-                        
+                 
     player_switch = pg.sprite.spritecollide(self.Player, self.switch_group, False) # player * switch
     for switch in player_switch:
        if switch.playerColliding == False:
@@ -154,7 +152,6 @@ class GameManager:  ########## Game manager #########
                     if guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY:
                         guard.killed()
                         break
-                
                 
     player_collectible = pg.sprite.spritecollide(self.Player, self.collect_group, False) # player * collectible
     for collect in player_collectible:
@@ -303,9 +300,12 @@ class GameManager:  ########## Game manager #########
     push = False
     player_box = pg.sprite.spritecollide(self.Player, self.box_group, False) # player * box
     for box in player_box:
-        if self.Player.shadow == box.shadow or not (self.Player.shadow):
+        if (self.Player.shadow == box.shadow or not (self.Player.shadow)) and box.preX == box.pos_float[0] and box.preY == box.pos_float[1]:
             self.gamePush(self.Player, box)
             self.complexCollision(box)
+            push = True
+        elif not(box.preX == box.pos_float[0] and box.preY == box.pos_float[1]):
+            #self.Player.killed()
             push = True
     
     for box1 in self.box_group:
@@ -524,14 +524,6 @@ class undoManager: ############ undo manager #############
                     pass
             self.frame.append([guard, [guard.preX, guard.preY], guard.preImage, guard.preCover, guard.preTurn, guard.preCooldown, switchCollide])
    
-   def addActionStatus(self):
-      for switch in self.manager.switch_group:
-         if not(switch.preOn == switch.on):
-            self.frame.append([switch])  
-      for guard in self.manager.guard_group:
-          if not(guard.preAlive == guard.alive):
-            self.frame.append([guard, guard.preAlive])
-            
    def addActionConveyor(self):
       if len(self.frame) > 0:
           for box in self.manager.box_group:
@@ -541,6 +533,14 @@ class undoManager: ############ undo manager #############
                     if box in switch.boxColliding:
                         switchCollide = switch
                 self.frame.append([box, [box.preX, box.preY], switchCollide])
+
+   def addActionStatus(self):
+      for switch in self.manager.switch_group:
+         if not(switch.preOn == switch.on):
+            self.frame.append([switch])  
+      for guard in self.manager.guard_group:
+          if not(guard.preAlive == guard.alive):
+            self.frame.append([guard, guard.preAlive])
   
    def addFrame(self):
       if not(len(self.frame) == 0):

@@ -163,8 +163,8 @@ class scene:
         if self.gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
             saveName = input("save under what name? \n>")
             if isinstance(saveName, (str)):
-                self.manager.user = saveName
-                self.gameManager.saveState.save(saveName)
+                self.gameManager.user = saveName
+                self.gameManager.saveState.save()
                 pg.quit()
                 exit()
             else:
