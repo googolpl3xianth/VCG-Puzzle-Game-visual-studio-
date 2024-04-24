@@ -687,7 +687,6 @@ class DialogueManager(Sprite): ########## dialogueManager ###########
     
 
 class inventoryImage(Sprite): ############### inventoryImage #################
-  
     def __init__(self, manager, *groups):
       self.manager = manager
       self.font = pg.font.Font('freesansbold.ttf', round(manager.tileSize[1]))
@@ -837,9 +836,9 @@ class Collectible(Collider):  ####### Collectible #########
 class Player(Collider):  ############ player ##############
 
   def __init__(self, pos, manager, *groups):
-    playerImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Player/Player.jpeg").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
-
-    shadowImage = Image.open("VCG Puzzle Game/sprites/Player/Player.jpeg")
+    # made player file png
+    playerImage = pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Player/Player.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
+    shadowImage = Image.open("VCG Puzzle Game/sprites/Player/Player.png")
     shadowImage = shadowImage.filter(FIND_EDGES)
     shadowImage.putalpha(128)
     shadowImage.save("VCG Puzzle Game/sprites/Player/SPShadow.png")
@@ -1644,5 +1643,3 @@ class Grid: ################ grid ###################
           pg.draw.line(screen, (0, 0, 0), (i * self.manager.tileSize[0], 0), (i * self.manager.tileSize[0], self.manager.screenHeight))
         for i in range(round(self.manager.screenHeight / self.manager.tileSize[1])):
           pg.draw.line(screen, (0, 0, 0), (0, i * self.manager.tileSize[1]), (self.manager.screenWidth, i * self.manager.tileSize[1]))
-
-

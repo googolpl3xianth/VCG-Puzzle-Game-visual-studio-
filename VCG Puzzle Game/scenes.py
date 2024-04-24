@@ -3,6 +3,7 @@ from sys import exit
 from PIL import Image
 import pygame as pg
 import sprites as spr
+from shader import Shader, update_shader
 
 class scene:
 
@@ -99,11 +100,16 @@ class scene:
         self.gameManager.saveState.saveSprites = None
                         
 
+
     tempShadow = self.gameManager.shadow
     menu = False
     restart = False
     returnValue = None
     transparency = 255
+
+    shader = Shader()
+    t = 0
+  
     while True:
       for event in pg.event.get():  # closes window
 
@@ -148,6 +154,7 @@ class scene:
         self.grid.draw(self.screen)
 
       self.screen.blit(self.surface, (0, 0))
+      
       pg.draw.rect(
           self.surface, (0, 0, 0, transparency),
           [0, 0, self.gameManager.screenWidth, self.gameManager.screenHeight])
@@ -273,6 +280,9 @@ class scene:
         elif returnValue == [-1, 0]:
           self.gameManager.Player.setPos((self.gameManager.Player.rect.center[0] / self.gameManager.tileSize[0] - .5 + self.gameManager.screenWidth / self.gameManager.tileSize[0]), None)
         return returnValue
+
+      t += 1
+      update_shader(shader, self.screen, t)
 
       pg.display.flip()
 
