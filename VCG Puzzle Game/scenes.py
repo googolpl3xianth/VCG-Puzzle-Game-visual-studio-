@@ -98,8 +98,6 @@ class scene:
                 if [switchWall.rect.x, switchWall.rect.y] == saveSprite[0]:
                     switchWall.on = saveSprite[1]
         self.gameManager.saveState.saveSprites = None
-                        
-
 
     tempShadow = self.gameManager.shadow
     menu = False
@@ -137,6 +135,7 @@ class scene:
           returnValue = [0, 1]
         elif self.gameManager.Player.rect.y + self.gameManager.Player.rect.height < 0:
           returnValue = [0, -1]
+
       for door in self.gameManager.door_group: ############## check if player is going through a door ################
         if door.open(self.gameManager):
           self.gameManager.Player.setPos(door.playerPos[0], door.playerPos[1])
@@ -161,6 +160,15 @@ class scene:
 
       if menu and returnValue is None:
         keys = pg.key.get_pressed()
+        if self.gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
+            saveName = input("save under what name? \n>")
+            if isinstance(saveName, (str)):
+                self.manager.user = saveName
+                self.gameManager.saveState.save(saveName)
+                pg.quit()
+                exit()
+            else:
+                print("name is not a string. input: " + saveName)
         if self.gameManager.devMode and keys[pg.K_k]:
             if keys[pg.K_1]:
               if not(self.gameManager.inventoryImage.searchInv("key1")):
@@ -209,7 +217,6 @@ class scene:
             if keys[pg.K_5]:
               if not(self.gameManager.inventoryImage.searchInv("map5")):
                 spr.Collectible((0,0), "map", "map5", self.gameManager).collected()
-              
         if self.gameManager.devMode and keys[pg.K_t]:
             while True:
                 try:
@@ -287,7 +294,6 @@ class scene:
       pg.display.flip()
 
       self.clock.tick(self.gameManager.FPS)
-
 
 
 def gameLoop(gameManager, scenes, start=[0,0]):

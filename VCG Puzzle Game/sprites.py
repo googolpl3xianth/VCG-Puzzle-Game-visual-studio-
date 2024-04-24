@@ -31,6 +31,7 @@ def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager): #######
 class GameManager:  ########## Game manager #########
 
   def __init__(self, FPS):
+    self.user = 'username'
     width, height = pg.display.get_desktop_sizes()[0]
     width = round(width / 22) * 22
     self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
@@ -403,7 +404,6 @@ class saveState: ########## saveState ###########
        self.saveSprites = None
        
     def save(self):
-       print("save")
        allSpriteData = []
        for box in self.manager.box_group:
            allSpriteData.append([box.initPos, box.pos_float])
@@ -420,12 +420,12 @@ class saveState: ########## saveState ###########
                self.manager.inventoryImage.coins.names,
                self.manager.inventoryImage.maps.names,
                allSpriteData]
-       with open('savefile.dat', 'wb') as f:
+       with open('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat', 'wb') as f:
            pickle.dump(data, f)
            
     def load(self):
-        if os.path.isfile('savefile.dat'):
-            with open('savefile.dat', 'rb') as f:
+        if os.path.isfile('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat'):
+            with open('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat', 'rb') as f:
                 self.manager.sceneIndex, player_pos_float, self.manager.inventoryImage.keys.names, self.manager.inventoryImage.coins.names,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
                 self.manager.Player.setPos(player_pos_float[0], player_pos_float[1], False)
                 self.manager.inventoryImage.keys.num = len(self.manager.inventoryImage.keys.names)
@@ -531,6 +531,7 @@ class undoManager: ############ undo manager #############
       for guard in self.manager.guard_group:
           if not(guard.preAlive == guard.alive):
             self.frame.append([guard, guard.preAlive])
+            
    def addActionConveyor(self):
       if len(self.frame) > 0:
           for box in self.manager.box_group:
@@ -695,7 +696,7 @@ class inventoryImage(Sprite): ############### inventoryImage #################
 
       self.collectibles = pg.sprite.Group()
       self.keys = Item(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
-      self.coins = Item(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Collectibles/key.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
+      self.coins = Item(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Collectibles/coin.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
       self.maps = Item(pg.transform.scale(pg.image.load("VCG Puzzle Game/sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
       self.collectibles.add(self.keys, self.coins, self.maps)
       self.showMap = False
@@ -707,7 +708,6 @@ class inventoryImage(Sprite): ############### inventoryImage #################
        else:
           self.showMap = False
        
-
     def addItem(self, collectible):
         if collectible.type == "key":
             self.keys.addItem(collectible)

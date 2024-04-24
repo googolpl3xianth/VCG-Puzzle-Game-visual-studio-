@@ -4,6 +4,7 @@ import pygame as pg
 import sprites as spr
 from shader import Shader, update_shader
 import moderngl
+import os.path
 
 
 def main(gameManager):  # starting scene
@@ -15,7 +16,6 @@ def main(gameManager):  # starting scene
   surface = pg.Surface((gameManager.screenWidth, gameManager.screenHeight),
                        pg.SRCALPHA)
   clock = pg.time.Clock()
-
   button = (spr.Button("VCG Puzzle Game/sprites/Buttons/startButton.png",
                       (gameManager.screenWidth / 2,
                       gameManager.screenHeight / 2),
@@ -24,8 +24,6 @@ def main(gameManager):  # starting scene
                        (gameManager.screenWidth / 2, 
                        gameManager.tileSize[1] * 3 + gameManager.screenHeight / 2), 
                        gameManager, False))  # start button
-
-
   background = spr.Background("VCG Puzzle Game/sprites/BGs/titleScreen.jpg", gameManager, False)
 
   all_sprites = pg.sprite.Group()
@@ -57,6 +55,14 @@ def main(gameManager):  # starting scene
                  [0, 0, gameManager.screenWidth, gameManager.screenHeight])
 
     keys = pg.key.get_pressed()
+    if gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
+            saveName = input("saved under what name? \n>")
+            if os.path.isfile('VCG Puzzle Game/saveFiles/' + saveName + '.dat'):
+              gameManager.user = saveName
+              gameManager.saveState.load()
+              return None
+            else:
+               print("no saveFile under that name")
     if gameManager.devMode and keys[pg.K_t]:
         while True:
             try:

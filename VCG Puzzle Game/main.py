@@ -45,20 +45,42 @@ def void(gameManager):
     except TypeError:
       return None
 
+
 if __name__ == "__main__":
   main()
 
 # Controls:
 # WASD movement
-# Space to grab boxes and move them
-# Shift to go into shadow mode and move through most objects
+# Hold SPACE to go into shadow mode and move through most objects
+# Hold SHIFT to sprint
 # Press ESC to pause
 # Press R to restart while paused
-# Press G while in menu or when paused then type in the scene index into the console to skip to it
+# Press Z to undo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ***************** DEV ONLY ***************** #
+# Press ctrl + s while paused to save to name
+# Press ctrl + s while in menu to load name save
+# Hold g to toggle grid
+# Hold h to hide player
+# Press t while in menu or when paused then type in the scene index into the console to skip to it
 
 # rule 0: Once you enter the void, there is no return
 # rule 1: As long as there is a physical object, you are anchored to the real world
 # rule 2: A shadow that enters a shadow will become merged with it
-# rule 3: A merged shadow in the real world will cease existing
-# rule 4: A merged shadow in the void will ascend if there is void in the real world  
-# rule 5: Each scene is seperated by 10 rooms  
+# rule 3: A merged shadow in the void will ascend if there is void in the real world
