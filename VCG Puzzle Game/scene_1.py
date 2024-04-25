@@ -83,48 +83,43 @@ def main(gameManager):  # first scene
                 spr.Wall((3, 7), False, 4, True, gameManager),
                 spr.Wall((18, 2), False, 1, True, gameManager),
                 spr.Wall((16, 3), True, 1, True, gameManager),
-                spr.Wall((19, 7), True, 3, True, gameManager),
                 spr.Wall((16, 4), False, 4, True, gameManager),
                 spr.Wall((19, 0), True, 3, True, gameManager),
                 spr.Wall((2, 2), False, 15, True, gameManager),
                 spr.Wall((0, 11), False, 20, True, gameManager),
                 spr.Wall((0, 0), False, 17, True, gameManager),
                 spr.Wall((0, 0), True, 12, True, gameManager),
-                spr.Wall((21, 0), True, 7, True, gameManager),
-                spr.Wall((17, 9), False, 2, True, gameManager),
-                spr.Wall((16, 8), True, 2, True, gameManager),
-                spr.Wall((14, 8), False, 2, True, gameManager))
+                spr.Wall((21, 0), True, 9, True, gameManager),
+                spr.Wall((18, 9), False, 2, True, gameManager),
+                spr.Wall((16, 8), False, 3, True, gameManager))
 
-  spike_group = (spr.Spike((21, 7), gameManager),
-                                spr.Spike((21, 8), gameManager),
-                                spr.Spike((21, 9), gameManager),
-                                spr.Spike((21, 10), gameManager),
-                                spr.Spike((21, 11), gameManager))
+  spike_group = (
+                spr.Spike((21, 9), gameManager),
+                spr.Spike((21, 10), gameManager),
+                spr.Spike((21, 11), gameManager))
   box_group = (spr.Box((17, 1), False, gameManager),
                               spr.Box((2, 6), True, gameManager))
   rSwitchWall_group = [
       spr.switchWall((2, 1), "red", False, gameManager),
       spr.switchWall((1, 2), "red", False, gameManager)]
   bSwitchWall_group = [
-      spr.switchWall((20, 6), "blue", False, gameManager),
+      spr.switchWall((20, 8), "blue", False, gameManager),
       spr.switchWall((19, 10), "blue", True, gameManager)]
   gSwitchWall_group = [
-      spr.switchWall((14, 9), "green", True, gameManager),
-      spr.switchWall((14, 10), "green", True, gameManager)]
+      spr.switchWall((16, 9), "green", True, gameManager),
+      spr.switchWall((16, 10), "green", True, gameManager)]
   switch_group = (
       spr.Switch((1, 1), rSwitchWall_group, gameManager),
-      spr.Switch((20, 7), bSwitchWall_group, gameManager),
-      spr.Switch((20, 8), bSwitchWall_group, gameManager),
       spr.Switch((20, 9), bSwitchWall_group, gameManager),
       spr.Switch((20, 10), bSwitchWall_group, gameManager),
       spr.Switch((20, 11), bSwitchWall_group, gameManager),
-      spr.Switch((16, 10), bSwitchWall_group, gameManager),
-      spr.Switch((17, 10), gSwitchWall_group, gameManager))
+      spr.Switch((18, 10), gSwitchWall_group, gameManager))
 
   collectible_group = (
       spr.Collectible((4, 9), "coin", "coin1", gameManager))
 
-  conveyor_group = (spr.Conveyor((15, 9), "S", gameManager), spr.Conveyor((15,10), "N", gameManager))
+  conveyor_group = (spr.Conveyor((17, 9), "S", gameManager), 
+                    spr.Conveyor((17, 10), "N", gameManager))
 
   all_sprites.add(background, wall_group, conveyor_group, rSwitchWall_group, bSwitchWall_group,
                   gSwitchWall_group, switch_group, collectible_group,
@@ -137,7 +132,7 @@ def main(gameManager):  # first scene
 
   killShadow_group = (
       spr.killShadow((4, 0, 18, gameManager.screenHeight // gameManager.tileSize[1]), gameManager),
-      spr.killShadow((0, 5, gameManager.screenWidth // gameManager.tileSize [0], 7), gameManager),
+      spr.killShadow((0, 5, gameManager.screenWidth // gameManager.tileSize [0], 8), gameManager),
       spr.killShadow((2, 2, 1, 1), gameManager),
       spr.killShadow((2, 4, 3, 1), gameManager),
       spr.killShadow((0, 3, 1, 1), gameManager))

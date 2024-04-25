@@ -31,6 +31,10 @@ class scene:
         self.screen = gameManager.screen
         self.surface = pg.Surface(
             (gameManager.screenWidth, gameManager.screenHeight), pg.SRCALPHA)
+        self.lowerBound = pg.Surface(
+            (self.gameManager.screen.get_width(), self.gameManager.screen.get_height() - self.gameManager.screenHeight))
+        self.upperBound = pg.Surface(
+            (self.gameManager.screen.get_width() - self.gameManager.screenWidth, self.gameManager.screen.get_height()))
         self.clock = pg.time.Clock()
 
         gameManager.Player.alive = True
@@ -81,23 +85,53 @@ class scene:
     
     if self.gameManager.saveState.saveSprites is not None:
         for saveSprite in self.gameManager.saveState.saveSprites:
+            if isinstance(saveSprite[0], (int)):
+               if not(saveSprite[0]):
+                  self.gameManager.Player.killed()
             for box in self.gameManager.box_group:
                 if box.pos_float == saveSprite[0]:
                     box.pos_float = saveSprite[1]
                     box.rect.x = round(box.pos_float[0])
                     box.rect.y = round(box.pos_float[1])
+                    break
             for guard in self.gameManager.guard_group:
                 if guard.pos_float == saveSprite[0]:
                     guard.pos_float = saveSprite[1]
                     guard.rect.x = round(guard.pos_float[0])
                     guard.rect.y = round(guard.pos_float[1])
+                    if not(saveSprite[2]):
+                      guard.killed()
+                    guard.cover = saveSprite[3]
+                    guard.turn = saveSprite[4]
+                    if guard.turn:
+                      guard.vision.image = pg.transform.rotate(guard.vision.image, 180)
+                    guard.cooldown = saveSprite[5]
+                    guard.updateVision()
+                    break
             for switch in self.gameManager.switch_group:
                 if [switch.rect.x, switch.rect.y] == saveSprite[0]:
                     switch.on = saveSprite[1]
+                    switch.playerColliding = saveSprite[2]
+                    for pos in saveSprite[3]:
+                       for box in self.gameManager.box_group:
+                          if box.pos_float == pos:
+                             switch.boxColliding.append(box)
+                             break
+                    for pos in saveSprite[4]:
+                       for guard in self.gameManager.guard_group:
+                          if guard.pos_float == pos:
+                             switch.boxColliding.append(guard)
+                             break
+                    break
             for switchWall in self.gameManager.switchWall_group:
                 if [switchWall.rect.x, switchWall.rect.y] == saveSprite[0]:
                     switchWall.on = saveSprite[1]
+                    break
         self.gameManager.saveState.saveSprites = None
+
+    for sprite in self.all_sprites:
+      if sprite is not self.gameManager.Player:
+         sprite.update()
 
     tempShadow = self.gameManager.shadow
     menu = False
@@ -127,11 +161,11 @@ class scene:
       if transparency == 0 and not (menu) and returnValue is None and self.gameManager.Player.alive:
         self.all_sprites.update()
         self.gameManager.checkCollisions()
-        if self.gameManager.Player.rect.x > self.gameManager.screenWidth - self.gameManager.Player.rect.width: ###### player changing rooms ###########
+        if self.gameManager.Player.rect.x > self.gameManager.screenWidth: ###### player changing rooms ###########
           returnValue = [1, 0]
         elif self.gameManager.Player.rect.x + self.gameManager.Player.rect.width < 0:
           returnValue = [-1, 0]
-        elif self.gameManager.Player.rect.y > self.gameManager.screenHeight - self.gameManager.Player.rect.height:
+        elif self.gameManager.Player.rect.y > self.gameManager.screenHeight:
           returnValue = [0, 1]
         elif self.gameManager.Player.rect.y + self.gameManager.Player.rect.height < 0:
           returnValue = [0, -1]
@@ -148,6 +182,9 @@ class scene:
           sprite.animate()
         sprite.draw(self.screen)
 
+      self.screen.blit(self.lowerBound, (0, self.gameManager.screenHeight))
+      self.screen.blit(self.upperBound, (self.gameManager.screenWidth, 0))
+
       if self.gameManager.devMode: ############# devMode ################
         self.grid.update()
         self.grid.draw(self.screen)
@@ -163,8 +200,8 @@ class scene:
         if self.gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
             saveName = input("save under what name? \n>")
             if isinstance(saveName, (str)):
-                self.manager.user = saveName
-                self.gameManager.saveState.save(saveName)
+                self.gameManager.user = saveName
+                self.gameManager.saveState.save()
                 pg.quit()
                 exit()
             else:
@@ -241,6 +278,7 @@ class scene:
         ])
         self.menuText.draw(self.screen)
 
+
       if not (self.gameManager.Player.alive): ########### if player dies ###############
         keys = pg.key.get_pressed()
         if keys[pg.K_z]:
@@ -268,6 +306,11 @@ class scene:
       if tempShadow != self.gameManager.shadow: ############### switchVoid ###########
         return "shadow"
 
+      t += 1
+      update_shader(shader, self.screen, t)
+
+      pg.display.flip()
+
       if returnValue is None and transparency > 0:
         transparency -= 10
         if transparency < 0:
@@ -287,11 +330,6 @@ class scene:
         elif returnValue == [-1, 0]:
           self.gameManager.Player.setPos((self.gameManager.Player.rect.center[0] / self.gameManager.tileSize[0] - .5 + self.gameManager.screenWidth / self.gameManager.tileSize[0]), None)
         return returnValue
-
-      t += 1
-      update_shader(shader, self.screen, t)
-
-      pg.display.flip()
 
       self.clock.tick(self.gameManager.FPS)
 

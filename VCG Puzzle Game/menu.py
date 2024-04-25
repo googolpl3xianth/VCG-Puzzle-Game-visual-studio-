@@ -11,8 +11,6 @@ def main(gameManager):  # starting scene
   pg.init()
   pg.display.set_caption('menu')
 
-  screen = pg.display.set_mode(
-      (gameManager.screenWidth, gameManager.screenHeight), pg.OPENGL | pg.DOUBLEBUF)
   surface = pg.Surface((gameManager.screenWidth, gameManager.screenHeight),
                        pg.SRCALPHA)
   clock = pg.time.Clock()
@@ -49,20 +47,26 @@ def main(gameManager):  # starting scene
             run = False
 
     for sprite in all_sprites:
-      sprite.draw(screen)
-    screen.blit(surface, (0, 0))
+      sprite.draw(gameManager.screen)
+    gameManager.screen.blit(surface, (0, 0))
     pg.draw.rect(surface, (0, 0, 0, transparency),
                  [0, 0, gameManager.screenWidth, gameManager.screenHeight])
 
     keys = pg.key.get_pressed()
     if gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
-            saveName = input("saved under what name? \n>")
-            if os.path.isfile('VCG Puzzle Game/saveFiles/' + saveName + '.dat'):
-              gameManager.user = saveName
-              gameManager.saveState.load()
-              return None
-            else:
-               print("no saveFile under that name")
+      saveName = input("saved under what name? \n>")
+      if os.path.isfile('VCG Puzzle Game/saveFiles/' + saveName + '.dat'):
+        gameManager.user = saveName
+        gameManager.saveState.load()
+        return None
+      else:
+          print("no saveFile under that name")
+    if gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_n]:
+      username = input("what is your username \n>")
+      if isinstance(username, (str)):
+         gameManager.user = username
+      else:
+          print("name is not a string")
     if gameManager.devMode and keys[pg.K_t]:
         while True:
             try:
@@ -90,7 +94,7 @@ def main(gameManager):  # starting scene
       return None
 
     t += 1
-    update_shader(shader, screen, t)
+    update_shader(shader, gameManager.screen, t)
 
     pg.display.flip()  # updates screen
 

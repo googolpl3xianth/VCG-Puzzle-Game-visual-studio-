@@ -6,7 +6,7 @@ import pickle
 import os.path
 
 pg.init()
-screen = pg.display.set_mode((1,1))
+screen = pg.display.set_mode((0,0))
 
 devMode = True
 
@@ -32,12 +32,10 @@ class GameManager:  ########## Game manager #########
 
   def __init__(self, FPS):
     self.user = 'username'
-    width, height = pg.display.get_desktop_sizes()[0]
-    width = round(width / 22) * 22
-    self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
-    self.screenWidth = self.screen.get_width()
-    self.screenHeight = self.screen.get_height()
-    self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
+    self.screen = pg.display.set_mode((0,0), pg.OPENGL | pg.DOUBLEBUF, pg.FULLSCREEN)
+    self.tileSize = (round(self.screen.get_width() / 22),  round(self.screen.get_width() / 22))
+    self.screenWidth = self.tileSize[0] * 22
+    self.screenHeight = self.tileSize[1] * 12
     self.FPS = FPS
 
     self.devMode = devMode
@@ -101,9 +99,7 @@ class GameManager:  ########## Game manager #########
     if self.conveyorPush():
         self.undoManager.addActionConveyor()
     self.collisionReset()
-    
-
-                        
+                 
     player_switch = pg.sprite.spritecollide(self.Player, self.switch_group, False) # player * switch
     for switch in player_switch:
        if switch.playerColliding == False:
@@ -154,7 +150,6 @@ class GameManager:  ########## Game manager #########
                     if guard.pos_float[0] == guard.preX and guard.pos_float[1] == guard.preY:
                         guard.killed()
                         break
-                
                 
     player_collectible = pg.sprite.spritecollide(self.Player, self.collect_group, False) # player * collectible
     for collect in player_collectible:
@@ -303,9 +298,12 @@ class GameManager:  ########## Game manager #########
     push = False
     player_box = pg.sprite.spritecollide(self.Player, self.box_group, False) # player * box
     for box in player_box:
-        if self.Player.shadow == box.shadow or not (self.Player.shadow):
+        if (self.Player.shadow == box.shadow or not (self.Player.shadow)) and box.preX == box.pos_float[0] and box.preY == box.pos_float[1]:
             self.gamePush(self.Player, box)
             self.complexCollision(box)
+            push = True
+        elif not(box.preX == box.pos_float[0] and box.preY == box.pos_float[1]):
+            #self.Player.killed()
             push = True
     
     for box1 in self.box_group:
@@ -405,17 +403,25 @@ class saveState: ########## saveState ###########
        
     def save(self):
        allSpriteData = []
+       allSpriteData.append([self.manager.Player.alive])
+       for switch in self.manager.switch_group:
+           boxArray = []
+           guardArray = []
+           for box in switch.boxColliding:
+              boxArray.append(box.initPos)
+           for guard in switch.guardColliding:
+              guardArray.append(guard.initPos)
+           allSpriteData.append([switch.initPos, switch.on, switch.playerColliding, boxArray, guardArray])
+       for switchWall in self.manager.switchWall_group:
+           allSpriteData.append([switchWall.initPos, switchWall.on])
        for box in self.manager.box_group:
            allSpriteData.append([box.initPos, box.pos_float])
        for guard in self.manager.guard_group:
-           allSpriteData.append([guard.initPos, guard.pos_float])
-       for switch in self.manager.switch_group:
-           allSpriteData.append([switch.initPos, switch.on])
-       for switchWall in self.manager.switchWall_group:
-           allSpriteData.append([switchWall.initPos, switchWall.on])
-             
+           allSpriteData.append([guard.initPos, guard.pos_float, guard.alive, guard.cover, guard.turn, guard.cooldown])
+
        data = [self.manager.sceneIndex, 
                self.manager.Player.pos_float,
+               self.manager.Player.shadow,
                self.manager.inventoryImage.keys.names,
                self.manager.inventoryImage.coins.names,
                self.manager.inventoryImage.maps.names,
@@ -426,8 +432,17 @@ class saveState: ########## saveState ###########
     def load(self):
         if os.path.isfile('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat'):
             with open('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat', 'rb') as f:
-                self.manager.sceneIndex, player_pos_float, self.manager.inventoryImage.keys.names, self.manager.inventoryImage.coins.names,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
+                self.manager.sceneIndex, player_pos_float, self.manager.Player.shadow, self.manager.inventoryImage.keys.names, coinNames,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
+                if self.manager.Player.shadow:
+                  self.manager.Player.collidingreal = True
+                  self.manager.Player.update()
                 self.manager.Player.setPos(player_pos_float[0], player_pos_float[1], False)
+                if len(coinNames) > 0:
+                  self.manager.inventoryImage.coins.num = 0
+                  Collectible((0,0), "coin", "coin1", self.manager).collected()
+                  self.manager.inventoryImage.coins.names.pop()
+                  self.manager.inventoryImage.coins.num = 0
+                self.manager.inventoryImage.coins.names = coinNames
                 self.manager.inventoryImage.keys.num = len(self.manager.inventoryImage.keys.names)
                 self.manager.inventoryImage.coins.num = len(self.manager.inventoryImage.coins.names)
                 self.manager.inventoryImage.maps.num = len(self.manager.inventoryImage.maps.names)
@@ -524,14 +539,6 @@ class undoManager: ############ undo manager #############
                     pass
             self.frame.append([guard, [guard.preX, guard.preY], guard.preImage, guard.preCover, guard.preTurn, guard.preCooldown, switchCollide])
    
-   def addActionStatus(self):
-      for switch in self.manager.switch_group:
-         if not(switch.preOn == switch.on):
-            self.frame.append([switch])  
-      for guard in self.manager.guard_group:
-          if not(guard.preAlive == guard.alive):
-            self.frame.append([guard, guard.preAlive])
-            
    def addActionConveyor(self):
       if len(self.frame) > 0:
           for box in self.manager.box_group:
@@ -541,6 +548,14 @@ class undoManager: ############ undo manager #############
                     if box in switch.boxColliding:
                         switchCollide = switch
                 self.frame.append([box, [box.preX, box.preY], switchCollide])
+
+   def addActionStatus(self):
+      for switch in self.manager.switch_group:
+         if not(switch.preOn == switch.on):
+            self.frame.append([switch])  
+      for guard in self.manager.guard_group:
+          if not(guard.preAlive == guard.alive):
+            self.frame.append([guard, guard.preAlive])
   
    def addFrame(self):
       if not(len(self.frame) == 0):
@@ -566,10 +581,10 @@ class Sprite(pg.sprite.Sprite):  ######### sprite #########
     
     if pos is not None:
         if grid:
-          self.rect.x = (pos[0] + .5) * manager.tileSize[0] - self.rect.width / 2
-          self.rect.y = (pos[1] + .5) * manager.tileSize[1] - self.rect.height / 2
+          self.rect.x = round((pos[0] + .5) * manager.tileSize[0] - self.rect.width / 2)
+          self.rect.y = round((pos[1] + .5) * manager.tileSize[1] - self.rect.height / 2)
         else:
-          self.rect.center = (pos[0], pos[1])
+          self.rect.center = (round(pos[0]), round(pos[1]))
 
   def update(self):
     pass
@@ -861,14 +876,14 @@ class Player(Collider):  ############ player ##############
     self.globalFPS = manager.FPS
 
     # animation lists
-    self.walkN = [pg.transform.rotate(playerImage, 180)]
-    self.walkE = [pg.transform.rotate(playerImage, 90)]
+    self.walkN = [pg.transform.scale(pg.transform.rotate(playerImage, 180), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
+    self.walkE = [pg.transform.scale(pg.transform.rotate(playerImage, 90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
     self.walkS = [playerImage]
-    self.walkW = [pg.transform.rotate(playerImage, -90)]
-    self.SWalkN = [pg.transform.rotate(shadowPlayerImage, 180)]
-    self.SWalkE = [pg.transform.rotate(shadowPlayerImage, 90)]
+    self.walkW = [pg.transform.scale(pg.transform.rotate(playerImage, -90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
+    self.SWalkN = [pg.transform.scale(pg.transform.rotate(shadowPlayerImage, 180), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
+    self.SWalkE = [pg.transform.scale(pg.transform.rotate(shadowPlayerImage, 90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
     self.SWalkS = [shadowPlayerImage]
-    self.SWalkW = [pg.transform.rotate(shadowPlayerImage, -90)]
+    self.SWalkW = [pg.transform.scale(pg.transform.rotate(shadowPlayerImage, -90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
 
     self.frames = self.walkS
 
@@ -1076,13 +1091,13 @@ class Conveyor(Collider): ############## conveyor ##############
     
     if self.direction == "N":
         for i in range(len(self.frames)):
-          self.frames[i] = pg.transform.rotate(self.frames[i], 90)
+          self.frames[i] = pg.transform.scale(pg.transform.rotate(self.frames[i], 90), (manager.tileSize[0], manager.tileSize[1]))
     elif self.direction == "S":
         for i in range(len(self.frames)):
-          self.frames[i] = pg.transform.rotate(self.frames[i], -90)
+          self.frames[i] = pg.transform.scale(pg.transform.rotate(self.frames[i], -90), (manager.tileSize[0], manager.tileSize[1]))
     elif self.direction == "W":
         for i in range(len(self.frames)):
-          self.frames[i] = pg.transform.rotate(self.frames[i], 180)
+          self.frames[i] = pg.transform.scale(pg.transform.rotate(self.frames[i], 180), (manager.tileSize[0], manager.tileSize[1]))
 
     image = self.frames[0]
     
@@ -1195,14 +1210,13 @@ class Guard(Collider):  ############ guard ############
     self.vision = visionCone(self)
 
     if not(hor):
-      self.vision.image = pg.transform.rotate(self.vision.image, -90)
-      self.image = pg.transform.rotate(self.image, 90)
+      self.vision.image = pg.transform.scale(pg.transform.rotate(self.vision.image, -90), (manager.tileSize[0] * 3, manager.tileSize[1] * 2))
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     else:
-      self.vision.image = pg.transform.rotate(self.vision.image, 180)
+      self.vision.image = pg.transform.scale(pg.transform.rotate(self.vision.image, 180), (manager.tileSize[0] * 2, manager.tileSize[1] * 3))
 
     self.preImage = self.vision.image
       
-    self.update()
 
   def killed(self):
       self.alive = False
@@ -1273,7 +1287,7 @@ class Guard(Collider):  ############ guard ############
   def turnSelf(self):
     if self.alive:
         self.vision.image = pg.transform.rotate(self.vision.image, 180)
-        self.image = pg.transform.rotate(self.image, 180)
+        self.image = pg.transform.scale(pg.transform.rotate(self.image, 180), (self.manager.tileSize[0] * 4 // 5, self.manager.tileSize[1] * 4 // 5))
         if self.hor:
           if not(self.turn):
             self.vision.rect = self.vision.image.get_rect(midright=self.rect.center)
@@ -1291,8 +1305,9 @@ class Guard(Collider):  ############ guard ############
 
   def addSelf(self, manager):
     manager.guard_group.add(self)
-    manager.enemy_group.add(self)
-    manager.enemy_group.add(self.vision)
+    if self.alive:
+      manager.enemy_group.add(self)
+      manager.enemy_group.add(self.vision)
 
   def draw(self, screen):
     if self.alive:
@@ -1449,7 +1464,7 @@ class Door(Collider):  ############# door ###########
     super().__init__(doorImage, pos, manager, *groups)
 
     if direction == "E":
-      self.image = pg.transform.rotate(self.image, 180)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 180), (manager.tileSize[0], manager.tileSize[1] * 2))
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.y = pos[1] * manager.tileSize[1]
       self.playerPos = (manager.screenWidth / manager.tileSize[0] - 2, None)
@@ -1458,12 +1473,12 @@ class Door(Collider):  ############# door ###########
       self.rect.y = pos[1] * manager.tileSize[1]
       self.playerPos = (1, None)
     elif direction == "N":
-      self.image = pg.transform.rotate(self.image, 90)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 90), (manager.tileSize[0], manager.tileSize[1] * 2))
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.bottom = (pos[1] + 1) * manager.tileSize[1]
       self.playerPos = (None, 1)
     elif direction == "S":
-      self.image = pg.transform.rotate(self.image, -90)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, -90), (manager.tileSize[0], manager.tileSize[1] * 2))
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.y = pos[1] * manager.tileSize[1]
       self.playerPos = (manager.screenHeight / manager.tileSize[1] - 2, None)
@@ -1568,7 +1583,7 @@ class Wall(Collider):  ############# wall  ##################
           pos[1] * manager.tileSize[1] + self.height * num / 2
       ]
     else:
-      self.image = pg.transform.rotate(self.image, 90)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 90), (manager.tileSize[0], manager.tileSize[1]))
       pg.transform.scale(self.image, (manager.tileSize[0], manager.tileSize[1]))
       self.rect = self.image.get_rect()
       self.width = self.rect.width
