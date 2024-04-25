@@ -64,7 +64,7 @@ def main(gameManager):  # starting scene
     if gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_n]:
       username = input("what is your username \n>")
       if isinstance(username, (str)):
-         gameManager.user = saveName
+         gameManager.user = username
       else:
           print("name is not a string")
     if gameManager.devMode and keys[pg.K_t]:

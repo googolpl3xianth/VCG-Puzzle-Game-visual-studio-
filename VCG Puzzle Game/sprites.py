@@ -32,12 +32,6 @@ class GameManager:  ########## Game manager #########
 
   def __init__(self, FPS):
     self.user = 'username'
-    #width, height = pg.display.get_desktop_sizes()[0]
-    #width = round(width / 22) * 22
-    #self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
-    #self.screenWidth = self.screen.get_width()
-    #self.screenHeight = self.screen.get_height()
-    #self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
     self.screen = pg.display.set_mode((0,0), pg.OPENGL | pg.DOUBLEBUF, pg.FULLSCREEN)
     self.tileSize = (round(self.screen.get_width() / 22),  round(self.screen.get_width() / 22))
     self.screenWidth = self.tileSize[0] * 22
@@ -409,17 +403,25 @@ class saveState: ########## saveState ###########
        
     def save(self):
        allSpriteData = []
+       allSpriteData.append([self.manager.Player.alive])
+       for switch in self.manager.switch_group:
+           boxArray = []
+           guardArray = []
+           for box in switch.boxColliding:
+              boxArray.append(box.initPos)
+           for guard in switch.guardColliding:
+              guardArray.append(guard.initPos)
+           allSpriteData.append([switch.initPos, switch.on, switch.playerColliding, boxArray, guardArray])
+       for switchWall in self.manager.switchWall_group:
+           allSpriteData.append([switchWall.initPos, switchWall.on])
        for box in self.manager.box_group:
            allSpriteData.append([box.initPos, box.pos_float])
        for guard in self.manager.guard_group:
-           allSpriteData.append([guard.initPos, guard.pos_float])
-       for switch in self.manager.switch_group:
-           allSpriteData.append([switch.initPos, switch.on])
-       for switchWall in self.manager.switchWall_group:
-           allSpriteData.append([switchWall.initPos, switchWall.on])
-             
+           allSpriteData.append([guard.initPos, guard.pos_float, guard.alive, guard.cover, guard.turn, guard.cooldown])
+
        data = [self.manager.sceneIndex, 
                self.manager.Player.pos_float,
+               self.manager.Player.shadow,
                self.manager.inventoryImage.keys.names,
                self.manager.inventoryImage.coins.names,
                self.manager.inventoryImage.maps.names,
@@ -430,8 +432,17 @@ class saveState: ########## saveState ###########
     def load(self):
         if os.path.isfile('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat'):
             with open('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat', 'rb') as f:
-                self.manager.sceneIndex, player_pos_float, self.manager.inventoryImage.keys.names, self.manager.inventoryImage.coins.names,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
+                self.manager.sceneIndex, player_pos_float, self.manager.Player.shadow, self.manager.inventoryImage.keys.names, coinNames,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
+                if self.manager.Player.shadow:
+                  self.manager.Player.collidingreal = True
+                  self.manager.Player.update()
                 self.manager.Player.setPos(player_pos_float[0], player_pos_float[1], False)
+                if len(coinNames) > 0:
+                  self.manager.inventoryImage.coins.num = 0
+                  Collectible((0,0), "coin", "coin1", self.manager).collected()
+                  self.manager.inventoryImage.coins.names.pop()
+                  self.manager.inventoryImage.coins.num = 0
+                self.manager.inventoryImage.coins.names = coinNames
                 self.manager.inventoryImage.keys.num = len(self.manager.inventoryImage.keys.names)
                 self.manager.inventoryImage.coins.num = len(self.manager.inventoryImage.coins.names)
                 self.manager.inventoryImage.maps.num = len(self.manager.inventoryImage.maps.names)
@@ -1206,7 +1217,6 @@ class Guard(Collider):  ############ guard ############
 
     self.preImage = self.vision.image
       
-    self.update()
 
   def killed(self):
       self.alive = False

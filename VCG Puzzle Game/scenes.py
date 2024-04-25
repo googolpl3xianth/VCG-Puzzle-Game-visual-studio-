@@ -85,22 +85,48 @@ class scene:
     
     if self.gameManager.saveState.saveSprites is not None:
         for saveSprite in self.gameManager.saveState.saveSprites:
+            if isinstance(saveSprite[0], (int)):
+               if not(saveSprite[0]):
+                  self.gameManager.Player.killed()
             for box in self.gameManager.box_group:
                 if box.pos_float == saveSprite[0]:
                     box.pos_float = saveSprite[1]
                     box.rect.x = round(box.pos_float[0])
                     box.rect.y = round(box.pos_float[1])
+                    break
             for guard in self.gameManager.guard_group:
                 if guard.pos_float == saveSprite[0]:
                     guard.pos_float = saveSprite[1]
                     guard.rect.x = round(guard.pos_float[0])
                     guard.rect.y = round(guard.pos_float[1])
+                    if not(saveSprite[2]):
+                      guard.killed()
+                    guard.cover = saveSprite[3]
+                    guard.turn = saveSprite[4]
+                    if guard.turn:
+                      guard.vision.image = pg.transform.rotate(guard.vision.image, 180)
+                    guard.cooldown = saveSprite[5]
+                    guard.updateVision()
+                    break
             for switch in self.gameManager.switch_group:
                 if [switch.rect.x, switch.rect.y] == saveSprite[0]:
                     switch.on = saveSprite[1]
+                    switch.playerColliding = saveSprite[2]
+                    for pos in saveSprite[3]:
+                       for box in self.gameManager.box_group:
+                          if box.pos_float == pos:
+                             switch.boxColliding.append(box)
+                             break
+                    for pos in saveSprite[4]:
+                       for guard in self.gameManager.guard_group:
+                          if guard.pos_float == pos:
+                             switch.boxColliding.append(guard)
+                             break
+                    break
             for switchWall in self.gameManager.switchWall_group:
                 if [switchWall.rect.x, switchWall.rect.y] == saveSprite[0]:
                     switchWall.on = saveSprite[1]
+                    break
         self.gameManager.saveState.saveSprites = None
 
     for sprite in self.all_sprites:
