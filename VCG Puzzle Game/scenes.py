@@ -31,6 +31,10 @@ class scene:
         self.screen = gameManager.screen
         self.surface = pg.Surface(
             (gameManager.screenWidth, gameManager.screenHeight), pg.SRCALPHA)
+        self.lowerBound = pg.Surface(
+            (self.gameManager.screen.get_width(), self.gameManager.screen.get_height() - self.gameManager.screenHeight))
+        self.upperBound = pg.Surface(
+            (self.gameManager.screen.get_width() - self.gameManager.screenWidth, self.gameManager.screen.get_height()))
         self.clock = pg.time.Clock()
 
         gameManager.Player.alive = True
@@ -99,6 +103,10 @@ class scene:
                     switchWall.on = saveSprite[1]
         self.gameManager.saveState.saveSprites = None
 
+    for sprite in self.all_sprites:
+      if sprite is not self.gameManager.Player:
+         sprite.update()
+
     tempShadow = self.gameManager.shadow
     menu = False
     restart = False
@@ -127,11 +135,11 @@ class scene:
       if transparency == 0 and not (menu) and returnValue is None and self.gameManager.Player.alive:
         self.all_sprites.update()
         self.gameManager.checkCollisions()
-        if self.gameManager.Player.rect.x > self.gameManager.screenWidth - self.gameManager.Player.rect.width: ###### player changing rooms ###########
+        if self.gameManager.Player.rect.x > self.gameManager.screenWidth: ###### player changing rooms ###########
           returnValue = [1, 0]
         elif self.gameManager.Player.rect.x + self.gameManager.Player.rect.width < 0:
           returnValue = [-1, 0]
-        elif self.gameManager.Player.rect.y > self.gameManager.screenHeight - self.gameManager.Player.rect.height:
+        elif self.gameManager.Player.rect.y > self.gameManager.screenHeight:
           returnValue = [0, 1]
         elif self.gameManager.Player.rect.y + self.gameManager.Player.rect.height < 0:
           returnValue = [0, -1]
@@ -147,6 +155,9 @@ class scene:
         if not (menu) and returnValue is None:
           sprite.animate()
         sprite.draw(self.screen)
+
+      self.screen.blit(self.lowerBound, (0, self.gameManager.screenHeight))
+      self.screen.blit(self.upperBound, (self.gameManager.screenWidth, 0))
 
       if self.gameManager.devMode: ############# devMode ################
         self.grid.update()
@@ -241,6 +252,7 @@ class scene:
         ])
         self.menuText.draw(self.screen)
 
+
       if not (self.gameManager.Player.alive): ########### if player dies ###############
         keys = pg.key.get_pressed()
         if keys[pg.K_z]:
@@ -268,6 +280,11 @@ class scene:
       if tempShadow != self.gameManager.shadow: ############### switchVoid ###########
         return "shadow"
 
+      t += 1
+      update_shader(shader, self.screen, t)
+
+      pg.display.flip()
+
       if returnValue is None and transparency > 0:
         transparency -= 10
         if transparency < 0:
@@ -287,11 +304,6 @@ class scene:
         elif returnValue == [-1, 0]:
           self.gameManager.Player.setPos((self.gameManager.Player.rect.center[0] / self.gameManager.tileSize[0] - .5 + self.gameManager.screenWidth / self.gameManager.tileSize[0]), None)
         return returnValue
-
-      t += 1
-      update_shader(shader, self.screen, t)
-
-      pg.display.flip()
 
       self.clock.tick(self.gameManager.FPS)
 

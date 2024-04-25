@@ -6,7 +6,7 @@ import pickle
 import os.path
 
 pg.init()
-screen = pg.display.set_mode((1,1))
+screen = pg.display.set_mode((0,0))
 
 devMode = True
 
@@ -32,12 +32,16 @@ class GameManager:  ########## Game manager #########
 
   def __init__(self, FPS):
     self.user = 'username'
-    width, height = pg.display.get_desktop_sizes()[0]
-    width = round(width / 22) * 22
-    self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
-    self.screenWidth = self.screen.get_width()
-    self.screenHeight = self.screen.get_height()
-    self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
+    #width, height = pg.display.get_desktop_sizes()[0]
+    #width = round(width / 22) * 22
+    #self.screen = pg.display.set_mode((round(width), round(width * 6/11)))
+    #self.screenWidth = self.screen.get_width()
+    #self.screenHeight = self.screen.get_height()
+    #self.tileSize = (self.screenWidth / 22,  self.screenWidth / 22)
+    self.screen = pg.display.set_mode((0,0), pg.OPENGL | pg.DOUBLEBUF, pg.FULLSCREEN)
+    self.tileSize = (round(self.screen.get_width() / 22),  round(self.screen.get_width() / 22))
+    self.screenWidth = self.tileSize[0] * 22
+    self.screenHeight = self.tileSize[1] * 12
     self.FPS = FPS
 
     self.devMode = devMode
@@ -566,10 +570,10 @@ class Sprite(pg.sprite.Sprite):  ######### sprite #########
     
     if pos is not None:
         if grid:
-          self.rect.x = (pos[0] + .5) * manager.tileSize[0] - self.rect.width / 2
-          self.rect.y = (pos[1] + .5) * manager.tileSize[1] - self.rect.height / 2
+          self.rect.x = round((pos[0] + .5) * manager.tileSize[0] - self.rect.width / 2)
+          self.rect.y = round((pos[1] + .5) * manager.tileSize[1] - self.rect.height / 2)
         else:
-          self.rect.center = (pos[0], pos[1])
+          self.rect.center = (round(pos[0]), round(pos[1]))
 
   def update(self):
     pass
@@ -861,14 +865,14 @@ class Player(Collider):  ############ player ##############
     self.globalFPS = manager.FPS
 
     # animation lists
-    self.walkN = [pg.transform.rotate(playerImage, 180)]
-    self.walkE = [pg.transform.rotate(playerImage, 90)]
+    self.walkN = [pg.transform.scale(pg.transform.rotate(playerImage, 180), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
+    self.walkE = [pg.transform.scale(pg.transform.rotate(playerImage, 90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
     self.walkS = [playerImage]
-    self.walkW = [pg.transform.rotate(playerImage, -90)]
-    self.SWalkN = [pg.transform.rotate(shadowPlayerImage, 180)]
-    self.SWalkE = [pg.transform.rotate(shadowPlayerImage, 90)]
+    self.walkW = [pg.transform.scale(pg.transform.rotate(playerImage, -90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
+    self.SWalkN = [pg.transform.scale(pg.transform.rotate(shadowPlayerImage, 180), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
+    self.SWalkE = [pg.transform.scale(pg.transform.rotate(shadowPlayerImage, 90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
     self.SWalkS = [shadowPlayerImage]
-    self.SWalkW = [pg.transform.rotate(shadowPlayerImage, -90)]
+    self.SWalkW = [pg.transform.scale(pg.transform.rotate(shadowPlayerImage, -90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))]
 
     self.frames = self.walkS
 
@@ -1076,13 +1080,13 @@ class Conveyor(Collider): ############## conveyor ##############
     
     if self.direction == "N":
         for i in range(len(self.frames)):
-          self.frames[i] = pg.transform.rotate(self.frames[i], 90)
+          self.frames[i] = pg.transform.scale(pg.transform.rotate(self.frames[i], 90), (manager.tileSize[0], manager.tileSize[1]))
     elif self.direction == "S":
         for i in range(len(self.frames)):
-          self.frames[i] = pg.transform.rotate(self.frames[i], -90)
+          self.frames[i] = pg.transform.scale(pg.transform.rotate(self.frames[i], -90), (manager.tileSize[0], manager.tileSize[1]))
     elif self.direction == "W":
         for i in range(len(self.frames)):
-          self.frames[i] = pg.transform.rotate(self.frames[i], 180)
+          self.frames[i] = pg.transform.scale(pg.transform.rotate(self.frames[i], 180), (manager.tileSize[0], manager.tileSize[1]))
 
     image = self.frames[0]
     
@@ -1195,10 +1199,10 @@ class Guard(Collider):  ############ guard ############
     self.vision = visionCone(self)
 
     if not(hor):
-      self.vision.image = pg.transform.rotate(self.vision.image, -90)
-      self.image = pg.transform.rotate(self.image, 90)
+      self.vision.image = pg.transform.scale(pg.transform.rotate(self.vision.image, -90), (manager.tileSize[0] * 3, manager.tileSize[1] * 2))
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     else:
-      self.vision.image = pg.transform.rotate(self.vision.image, 180)
+      self.vision.image = pg.transform.scale(pg.transform.rotate(self.vision.image, 180), (manager.tileSize[0] * 2, manager.tileSize[1] * 3))
 
     self.preImage = self.vision.image
       
@@ -1273,7 +1277,7 @@ class Guard(Collider):  ############ guard ############
   def turnSelf(self):
     if self.alive:
         self.vision.image = pg.transform.rotate(self.vision.image, 180)
-        self.image = pg.transform.rotate(self.image, 180)
+        self.image = pg.transform.scale(pg.transform.rotate(self.image, 180), (self.manager.tileSize[0] * 4 // 5, self.manager.tileSize[1] * 4 // 5))
         if self.hor:
           if not(self.turn):
             self.vision.rect = self.vision.image.get_rect(midright=self.rect.center)
@@ -1291,8 +1295,9 @@ class Guard(Collider):  ############ guard ############
 
   def addSelf(self, manager):
     manager.guard_group.add(self)
-    manager.enemy_group.add(self)
-    manager.enemy_group.add(self.vision)
+    if self.alive:
+      manager.enemy_group.add(self)
+      manager.enemy_group.add(self.vision)
 
   def draw(self, screen):
     if self.alive:
@@ -1449,7 +1454,7 @@ class Door(Collider):  ############# door ###########
     super().__init__(doorImage, pos, manager, *groups)
 
     if direction == "E":
-      self.image = pg.transform.rotate(self.image, 180)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 180), (manager.tileSize[0], manager.tileSize[1] * 2))
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.y = pos[1] * manager.tileSize[1]
       self.playerPos = (manager.screenWidth / manager.tileSize[0] - 2, None)
@@ -1458,12 +1463,12 @@ class Door(Collider):  ############# door ###########
       self.rect.y = pos[1] * manager.tileSize[1]
       self.playerPos = (1, None)
     elif direction == "N":
-      self.image = pg.transform.rotate(self.image, 90)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 90), (manager.tileSize[0], manager.tileSize[1] * 2))
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.bottom = (pos[1] + 1) * manager.tileSize[1]
       self.playerPos = (None, 1)
     elif direction == "S":
-      self.image = pg.transform.rotate(self.image, -90)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, -90), (manager.tileSize[0], manager.tileSize[1] * 2))
       self.rect.x = pos[0] * manager.tileSize[0]
       self.rect.y = pos[1] * manager.tileSize[1]
       self.playerPos = (manager.screenHeight / manager.tileSize[1] - 2, None)
@@ -1568,7 +1573,7 @@ class Wall(Collider):  ############# wall  ##################
           pos[1] * manager.tileSize[1] + self.height * num / 2
       ]
     else:
-      self.image = pg.transform.rotate(self.image, 90)
+      self.image = pg.transform.scale(pg.transform.rotate(self.image, 90), (manager.tileSize[0], manager.tileSize[1]))
       pg.transform.scale(self.image, (manager.tileSize[0], manager.tileSize[1]))
       self.rect = self.image.get_rect()
       self.width = self.rect.width
