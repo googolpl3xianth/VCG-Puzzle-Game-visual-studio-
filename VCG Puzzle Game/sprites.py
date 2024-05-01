@@ -8,7 +8,7 @@ import os.path
 pg.init()
 screen = pg.display.set_mode((0,0))
 
-devMode = True
+devMode = False
 
 def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager): ################# spriteSheet #############
     frames = []
@@ -427,13 +427,21 @@ class saveState: ########## saveState ###########
                self.manager.inventoryImage.coins.names,
                self.manager.inventoryImage.maps.names,
                allSpriteData]
-       with open('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat', 'wb') as f:
+       with open('saveFiles/' + self.manager.user + '.dat', 'wb') as f:
            pickle.dump(data, f)
            
+    def checkFile(self):
+      if os.path.isfile('saveFiles/' + self.manager.user + '.dat'):
+          return True           
+      else:
+          return False
+      
     def load(self):
-        if os.path.isfile('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat'):
-            with open('VCG Puzzle Game/saveFiles/' + self.manager.user + '.dat', 'rb') as f:
-                self.manager.sceneIndex, player_pos_float, self.manager.Player.shadow, self.manager.inventoryImage.keys.names, coinNames,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
+        if os.path.isfile('saveFiles/' + self.manager.user + '.dat'):
+            with open('saveFiles/' + self.manager.user + '.dat', 'rb') as f:
+                sceneIndex, player_pos_float, self.manager.Player.shadow, self.manager.inventoryImage.keys.names, coinNames,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
+                self.manager.sceneIndex[0] = sceneIndex[0]
+                self.manager.sceneIndex[1] = sceneIndex[1]
                 if self.manager.Player.shadow:
                   self.manager.Player.collidingreal = True
                   self.manager.Player.update()
@@ -921,7 +929,7 @@ class Player(Collider):  ############ player ##############
     self.preShadow = self.shadow
     self.alive = True
 
-    self.direction = "E"
+    self.direction = "S"
     self.preDirection = self.direction
     self.clock = 0
     self.globalFPS = manager.FPS
@@ -1547,18 +1555,30 @@ class Door(Collider):  ############# door ###########
 
 class Button(Sprite):  ############# button ##################
 
-  def __init__(self, image, pos, manager, grid=True, *groups):
-    image = pg.transform.scale(pg.image.load(image).convert_alpha(), (manager.tileSize[0] * 8, manager.tileSize[1] * 4))
+  def __init__(self, image, pos, manager, grid=True, condition=True, *groups):
+    self.condition = condition
 
     super().__init__(image, pos, manager, grid, *groups)
 
-  def isClick(self, *groups):
-    mouse_pos = pg.mouse.get_pos()
-    mouse_click = pg.mouse.get_pressed()
+  def isClick(self):
+    if self.condition:
+      mouse_pos = pg.mouse.get_pos()
+      mouse_click = pg.mouse.get_pressed()
 
-    if self.rect.collidepoint(mouse_pos):
-      if mouse_click[0]:
-        return True
+      if self.rect.collidepoint(mouse_pos):
+        if mouse_click[0]:
+          return True
+    return False
+      
+  def animate(self):
+    if not(self.condition):
+        pass
+        # grey filter
+    else:
+      mouse_pos = pg.mouse.get_pos()
+      if(self.rect.collidepoint(mouse_pos)):
+        pass
+        # white filter
 
 
 class killShadow(Collider):  ########### kill shadow ########
@@ -1724,14 +1744,17 @@ class Grid: ################ grid ###################
   def __init__(self, manager):
     self.manager = manager
     self.hide = True
+    self.drawAllRect = False
 
   def update(self):
      keys = pg.key.get_pressed()
         
      if self.manager.devMode and keys[pg.K_g]:
          self.hide = False
+         self.drawAllRect = True
      else:
          self.hide = True
+         self.drawAllRect = False
 
   def draw(self, screen):
     if not self.hide:

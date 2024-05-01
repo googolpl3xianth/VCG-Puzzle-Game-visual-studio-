@@ -6,6 +6,7 @@ import sprites as spr
 from shader import Shader, update_shader
 from crt_shader import Graphic_engine
 
+
 class scene:
 
   def __init__(self, gameManager, all_sprites, blank=False, *groups):
@@ -47,13 +48,11 @@ class scene:
         deadText = font.render("You Died", True, (255, 0, 0))
         font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 3 / 4))
         returnText = font.render("Press r to restart or z to undo", True, (255, 0, 0))
-        
 
         self.menuText = pg.sprite.Group(
             spr.Sprite(pausedText, (gameManager.screenWidth // 2,
-                       gameManager.screenHeight // 2), self.gameManager,
+                       gameManager.screenHeight // 2), gameManager,
                        False, *groups))
-        
         self.deadText = pg.sprite.Group(
             spr.Sprite(deadText, (gameManager.screenWidth // 2,
                        gameManager.screenHeight // 2), self.gameManager,
@@ -65,6 +64,12 @@ class scene:
                 self.gameManager,
                 False,
             ))
+
+        font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 1 / 2))
+        exitText = font.render("save and exit", True, (0, 0, 0))
+        self.exitButton = spr.Button(exitText, (gameManager.screenWidth // 2,
+                       (gameManager.screenHeight // 2) + gameManager.tileSize[1]), gameManager,
+                       False)
 
         self.all_sprites = pg.sprite.Group()
 
@@ -179,10 +184,31 @@ class scene:
           self.gameManager.sceneIndex = door.returnIndex
           return None
           
+      if self.gameManager.devMode and self.grid.drawAllRect:
+        i = 0
       for sprite in self.all_sprites: ################ draws each sprite #######
         if not (menu) and returnValue is None:
           sprite.animate()
         sprite.draw(self.screen)
+        if self.gameManager.devMode and self.grid.drawAllRect and sprite is not (self.gameManager.inventoryImage) and sprite is not (self.gameManager.dialogueManager):
+          color = [0,0,0]
+          tempNum = i
+          if tempNum >= 4:
+            tempNum -= 4
+            color[0] = 1
+          if tempNum >= 2:
+            tempNum -= 2
+            color[1] = 1
+          if tempNum >= 1:
+            color[2] = 1
+          pg.draw.rect(self.screen, (255*color[0], 255*color[1], 255*color[2]), sprite.rect, 3)
+          if sprite in self.gameManager.guard_group:
+            pg.draw.rect(self.screen, (255*color[0], 255*color[1], 255*color[2]), sprite.vision.rect, 3)
+          i += 1
+          if i > 7:
+            i = 0
+
+        
 
       self.screen.blit(self.lowerBound, (0, self.gameManager.screenHeight))
       self.screen.blit(self.upperBound, (self.gameManager.screenWidth, 0))
@@ -279,6 +305,12 @@ class scene:
             0, 0, self.gameManager.screenWidth, self.gameManager.screenHeight
         ])
         self.menuText.draw(self.screen)
+        self.exitButton.animate()
+        self.exitButton.draw(self.screen)
+        if self.exitButton.isClick():
+          self.gameManager.saveState.save()
+          pg.quit()
+          exit()
 
 
       if not (self.gameManager.Player.alive): ########### if player dies ###############
