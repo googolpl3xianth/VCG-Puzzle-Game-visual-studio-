@@ -9,7 +9,7 @@ def main(gameManager):
   ##################### a ########################
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((1, 10), gameManager)
-  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
+  background = spr.Background("sprites/BGs/edge.png", gameManager)
 
   wall_group = (spr.Wall((21, .5), True, 3, True, gameManager),
                 spr.Wall((21, 4.5), True, 2, True, gameManager),
@@ -98,7 +98,7 @@ def main(gameManager):
   ##################### c ########################
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((2, 6), gameManager)
-  background = spr.Background("VCG Puzzle Game/sprites/BGs/edge.png", gameManager)
+  background = spr.Background("sprites/BGs/edge.png", gameManager)
 
   wall_group = (
                 spr.Wall((0, 11), False, 22, True, gameManager),

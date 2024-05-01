@@ -4,6 +4,7 @@ from PIL import Image
 import pygame as pg
 import sprites as spr
 from shader import Shader, update_shader
+from crt_shader import Graphic_engine
 
 class scene:
 
@@ -29,8 +30,8 @@ class scene:
         self.gameManager.clearLevel()
 
         self.screen = gameManager.screen
-        self.surface = pg.Surface(
-            (gameManager.screenWidth, gameManager.screenHeight), pg.SRCALPHA)
+        self.surface = pg.Surface((self.gameManager.screenWidth, self.gameManager.screenHeight), pg.SRCALPHA)
+        #self.surface = pg.Surface((self.gameManager.screenWidth, self.gameManager.screenHeight), pg.SRCALPHA).convert((255, 65282, 16711681, 0))
         self.lowerBound = pg.Surface(
             (self.gameManager.screen.get_width(), self.gameManager.screen.get_height() - self.gameManager.screenHeight))
         self.upperBound = pg.Surface(
@@ -140,6 +141,7 @@ class scene:
     transparency = 255
 
     shader = Shader()
+    #crt_shader =  Graphic_engine(self.surface, 1, False, True)
     t = 0
   
     while True:
@@ -308,6 +310,7 @@ class scene:
 
       t += 1
       update_shader(shader, self.screen, t)
+      #crt_shader()
 
       pg.display.flip()
 
@@ -335,11 +338,13 @@ class scene:
 
 
 def gameLoop(gameManager, scenes, start=[0,0]):
+  gameManager.scenes.clear()
+  gameManager.scenes = scenes
   tempArray = start.copy()
 
   ################ void #################
   all_sprites = pg.sprite.Group()
-  background = spr.Background("VCG Puzzle Game/sprites/BGs/blackBG.png", gameManager)
+  background = spr.Background("sprites/BGs/blackBG.png", gameManager)
   kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth // gameManager.tileSize[0],
                      gameManager.screenHeight // gameManager.tileSize[1]),

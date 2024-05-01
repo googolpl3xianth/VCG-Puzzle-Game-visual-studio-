@@ -14,15 +14,15 @@ def main(gameManager):  # starting scene
   surface = pg.Surface((gameManager.screenWidth, gameManager.screenHeight),
                        pg.SRCALPHA)
   clock = pg.time.Clock()
-  button = (spr.Button("VCG Puzzle Game/sprites/Buttons/startButton.png",
+  button = (spr.Button("sprites/Buttons/startButton.png",
                       (gameManager.screenWidth / 2,
                       gameManager.screenHeight / 2),
                       gameManager, False),
-            spr.Button("VCG Puzzle Game/sprites/Misc/dialogueBox.png", 
+            spr.Button("sprites/Misc/dialogueBox.png", 
                        (gameManager.screenWidth / 2, 
                        gameManager.tileSize[1] * 3 + gameManager.screenHeight / 2), 
                        gameManager, False))  # start button
-  background = spr.Background("VCG Puzzle Game/sprites/BGs/titleScreen.jpg", gameManager, False)
+  background = spr.Background("sprites/BGs/titleScreen.jpg", gameManager, False)
 
   all_sprites = pg.sprite.Group()
   all_sprites.add(background, button)
@@ -93,7 +93,6 @@ def main(gameManager):  # starting scene
     elif not (run) and transparency == 255:
       return None
 
-    t += 1
     update_shader(shader, gameManager.screen, t)
 
     pg.display.flip()  # updates screen
