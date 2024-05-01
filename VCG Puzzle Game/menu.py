@@ -14,14 +14,16 @@ def main(gameManager):  # starting scene
   surface = pg.Surface((gameManager.screenWidth, gameManager.screenHeight),
                        pg.SRCALPHA)
   clock = pg.time.Clock()
-  button = (spr.Button("sprites/Buttons/startButton.png",
+  font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 3 / 4))
+  continueText = font.render("Continue", True, (255, 255, 0))
+  button = (spr.Button(pg.transform.scale(pg.image.load("sprites/Buttons/startButton.png").convert_alpha(), (gameManager.tileSize[0] * 6, gameManager.tileSize[1] * 2.25)),
                       (gameManager.screenWidth / 2,
                       gameManager.screenHeight / 2),
                       gameManager, False),
-            spr.Button("sprites/Misc/dialogueBox.png", 
+            spr.Button(continueText, 
                        (gameManager.screenWidth / 2, 
-                       gameManager.tileSize[1] * 3 + gameManager.screenHeight / 2), 
-                       gameManager, False))  # start button
+                       gameManager.tileSize[1] * 2 + gameManager.screenHeight / 2), 
+                       gameManager, False, gameManager.saveState.checkFile()))  # start button
   background = spr.Background("sprites/BGs/titleScreen.jpg", gameManager, False)
 
   all_sprites = pg.sprite.Group()
@@ -43,8 +45,8 @@ def main(gameManager):  # starting scene
         run = False
         gameManager.sceneIndex[0] = 1
     if (button[1].isClick()):  # checks if start button is clicked
-        if gameManager.saveState.load():
-            run = False
+      gameManager.saveState.load()
+      run = False
 
     for sprite in all_sprites:
       sprite.draw(gameManager.screen)
@@ -55,7 +57,7 @@ def main(gameManager):  # starting scene
     keys = pg.key.get_pressed()
     if gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
       saveName = input("saved under what name? \n>")
-      if os.path.isfile('VCG Puzzle Game/saveFiles/' + saveName + '.dat'):
+      if os.path.isfile('saveFiles/' + saveName + '.dat'):
         gameManager.user = saveName
         gameManager.saveState.load()
         return None

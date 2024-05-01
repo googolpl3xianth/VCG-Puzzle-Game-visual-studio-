@@ -9,7 +9,6 @@ import pygame as pg
 import sprites as spr
 import scenes as scn
 import os
-import sys
 
 application_path = os.path.dirname(__file__)
 os.chdir(application_path)
@@ -42,7 +41,6 @@ def void(gameManager):
   shadowIndex = [0, 0]
 
   while True:
-    print(gameManager.sceneIndex)
     temp = scene_void.main()
     try:
       shadowIndex[0] += temp[0]
