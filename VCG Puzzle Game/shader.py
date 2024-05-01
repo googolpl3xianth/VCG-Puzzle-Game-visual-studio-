@@ -4,7 +4,7 @@ import moderngl
 
 
 class Shader:
-    def __init__(self) -> None:
+    def __init__(self, newNoiseIntensity=0.2, newDistortionIntensity=0.001) -> None:
         self.ctx = moderngl.create_context()
 
         self.quad_buffer = self.ctx.buffer(data=array('f', [
@@ -39,8 +39,8 @@ class Shader:
         in vec2 uvs;
         out vec4 f_color;
 
-        const float noiseIntensity = 0.2;    // Intensity of noise
-        const float distortionIntensity = 0.001; // Intensity of distortion
+        const float noiseIntensity = .2;    // Intensity of noise
+        const float distortionIntensity = .001; // Intensity of distortion
         const float aspectRatio = 4.0 / 4; // Target aspect ratio
         const float screenScale = 1;
 

@@ -8,6 +8,11 @@ import scene_6
 import pygame as pg
 import sprites as spr
 import scenes as scn
+import os
+import sys
+
+application_path = os.path.dirname(__file__)
+os.chdir(application_path)
 
 scenes = [menu, scene_1, scene_2, scene_3, scene_4, scene_5, scene_6]
 
@@ -28,7 +33,7 @@ def main():
 
 def void(gameManager):
   all_sprites = pg.sprite.Group()
-  background = spr.Background("VCG Puzzle Game/sprites/BGs/blackBG.png", gameManager, False)
+  background = spr.Background("sprites/BGs/blackBG.png", gameManager, False)
   kill_shadow = (spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0], gameManager.screenHeight / gameManager.tileSize[1]), gameManager))
   all_sprites.add(background, kill_shadow, gameManager.Player)
 
