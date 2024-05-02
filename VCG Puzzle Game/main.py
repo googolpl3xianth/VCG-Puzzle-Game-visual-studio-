@@ -27,7 +27,15 @@ def main():
   pg.init()
   while True:
     gameManager.clearLevel()
+    #try:
     scenes[gameManager.sceneIndex[0]].main(gameManager)
+    #except Exception as e:
+    #  template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+    #  message = template.format(type(e).__name__, e.args)
+    #  print(message)
+    #  gameManager.saveState.save()
+    #  pg.quit()
+    #  exit()
 
 
 def void(gameManager):

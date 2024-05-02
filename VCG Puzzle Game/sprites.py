@@ -447,14 +447,14 @@ class saveState: ########## saveState ###########
                   self.manager.Player.update()
                 self.manager.Player.setPos(player_pos_float[0], player_pos_float[1], False)
                 if len(coinNames) > 0:
-                  self.manager.inventoryImage.coins.num = 0
+                  self.manager.inventoryImage.coins.num = []
                   Collectible((0,0), "coin", "coin1", self.manager).collected()
                   self.manager.inventoryImage.coins.names.pop()
-                  self.manager.inventoryImage.coins.num = 0
+                  self.manager.inventoryImage.coins.num = []
                 self.manager.inventoryImage.coins.names = coinNames
-                self.manager.inventoryImage.keys.num = len(self.manager.inventoryImage.keys.names)
-                self.manager.inventoryImage.coins.num = len(self.manager.inventoryImage.coins.names)
-                self.manager.inventoryImage.maps.num = len(self.manager.inventoryImage.maps.names)
+                self.manager.inventoryImage.keys.num = self.manager.inventoryImage.keys.names
+                self.manager.inventoryImage.coins.num = self.manager.inventoryImage.coins.names
+                self.manager.inventoryImage.maps.num = self.manager.inventoryImage.maps.names
             return True           
         else:
            print("no save file")
@@ -744,7 +744,7 @@ class inventoryImage(Sprite): ############### inventoryImage #################
             self.maps.addItem(collectible)
 
     def searchMap(self):
-        if self.maps.num == 0:
+        if len(self.maps.num) == 0:
             return False
         return True
 
@@ -817,13 +817,13 @@ class inventoryImage(Sprite): ############### inventoryImage #################
         tempRect.center = [self.manager.screenWidth // 2, self.manager.screenHeight // 2]
         screen.blit(scaled_image, tempRect)
       for item in self.collectibles:
-        if item.num > 0:
+        if len(item.num) > 0:
             itemImage = item.image.copy()
             alpha = 128
             itemImage.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
             screen.blit(itemImage, ((2 * i + .5) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
-            text = self.font.render(str(item.num), 0, (0,0,0))
-            outline = self.font.render(str(item.num), 0, (255,255,255))
+            text = self.font.render(str(len(item.num)), 0, (0,0,0))
+            outline = self.font.render(str(len(item.num)), 0, (255,255,255))
             screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
             screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
             screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
@@ -838,13 +838,13 @@ class Item(Sprite): ############ Item #################
 
     def __init__(self, image, *groups):
         self.names = []
-        self.num = 0
+        self.num = []
         self.image = image
         
         super().__init__(image, None, None, *groups)
 
     def addItem(self, collectible):
-        self.num += 1
+        self.num.append(collectible.name)
         self.names.append(collectible.name)
         self.image = collectible.image
 
@@ -1547,8 +1547,9 @@ class Door(Collider):  ############# door ###########
 
   def open(self, manager):
     if self.isOpen and manager.inventoryImage.searchInv(self.item):
-       manager.inventoryImage.keys.num -= 1
-       return True
+      if self.item in manager.inventoryImage.keys.num:
+        manager.inventoryImage.keys.num.remove(self.item)
+      return True
     elif self.isOpen:
        manager.dialogueManager.setText("Missing" + " key. ('ENTER' to close dialogue)")
 

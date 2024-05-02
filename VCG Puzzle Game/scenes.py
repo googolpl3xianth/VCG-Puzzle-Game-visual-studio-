@@ -5,6 +5,7 @@ import pygame as pg
 import sprites as spr
 from shader import Shader, update_shader
 from crt_shader import Graphic_engine
+import os
 
 
 class scene:
@@ -393,7 +394,10 @@ def gameLoop(gameManager, scenes, start=[0,0]):
                      gameManager.screenHeight // gameManager.tileSize[1]),
                      gameManager))
 
-  map_group = (spr.Collectible((11, 6), "map", "map" + str(gameManager.sceneIndex[0]), gameManager))
+  if os.path.isfile("map" + str(gameManager.sceneIndex[0])):
+    map_group = (spr.Collectible((11, 6), "map", "map" + str(gameManager.sceneIndex[0]), gameManager))
+  else:
+    map_group = (spr.text((11, 6), 6, "nothing here yet, come back when the game is complete", gameManager))
 
   all_sprites.add(background, kill_shadow, map_group, gameManager.Player)
   voidEnd = scene(gameManager, all_sprites)
