@@ -306,7 +306,7 @@ class scene:
             0, 0, self.gameManager.screenWidth, self.gameManager.screenHeight
         ])
         self.menuText.draw(self.screen)
-        self.exitButton.animate()
+        self.exitButton.animate() 
         self.exitButton.draw(self.screen)
         if self.exitButton.isClick():
           self.gameManager.saveState.save()

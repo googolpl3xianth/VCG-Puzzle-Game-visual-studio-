@@ -4,6 +4,7 @@ from PIL.ImageFilter import FIND_EDGES
 import pygame as pg
 import pickle
 import os.path
+from pathlib import Path
 
 pg.init()
 screen = pg.display.set_mode((0,0))
@@ -403,9 +404,9 @@ class saveState: ########## saveState ###########
        self.saveSprites = None
        
     def save(self):
-       allSpriteData = []
-       allSpriteData.append([self.manager.Player.alive])
-       for switch in self.manager.switch_group:
+      allSpriteData = []
+      allSpriteData.append([self.manager.Player.alive])
+      for switch in self.manager.switch_group:
            boxArray = []
            guardArray = []
            for box in switch.boxColliding:
@@ -413,32 +414,34 @@ class saveState: ########## saveState ###########
            for guard in switch.guardColliding:
               guardArray.append(guard.initPos)
            allSpriteData.append([switch.initPos, switch.on, switch.playerColliding, boxArray, guardArray])
-       for switchWall in self.manager.switchWall_group:
+      for switchWall in self.manager.switchWall_group:
            allSpriteData.append([switchWall.initPos, switchWall.on])
-       for box in self.manager.box_group:
+      for box in self.manager.box_group:
            allSpriteData.append([box.initPos, box.pos_float])
-       for guard in self.manager.guard_group:
+      for guard in self.manager.guard_group:
            allSpriteData.append([guard.initPos, guard.pos_float, guard.alive, guard.cover, guard.turn, guard.cooldown])
 
-       data = [self.manager.sceneIndex, 
+      data = [self.manager.sceneIndex, 
                self.manager.Player.pos_float,
                self.manager.Player.shadow,
                self.manager.inventoryImage.keys.names,
                self.manager.inventoryImage.coins.names,
                self.manager.inventoryImage.maps.names,
                allSpriteData]
-       with open('saveFiles/' + self.manager.user + '.dat', 'wb') as f:
-           pickle.dump(data, f)
-           
+      if not os.path.exists(str(Path.home()) + "/breakSaveFiles"):
+        os.makedirs(str(Path.home()) + "/breakSaveFiles")
+      with open(str(Path.home()) + "/breakSaveFiles/" + self.manager.user + ".dat", "wb") as f:
+          pickle.dump(data, f)
+
     def checkFile(self):
-      if os.path.isfile('saveFiles/' + self.manager.user + '.dat'):
+      if os.path.isfile(str(Path.home()) + "/breakSaveFiles/" + self.manager.user + ".dat"):
           return True           
       else:
           return False
       
     def load(self):
-        if os.path.isfile('saveFiles/' + self.manager.user + '.dat'):
-            with open('saveFiles/' + self.manager.user + '.dat', 'rb') as f:
+        if os.path.isfile(str(Path.home()) + "/breakSaveFiles/" + self.manager.user + ".dat"):
+            with open(str(Path.home()) + "/breakSaveFiles/" + self.manager.user + ".dat", "rb") as f:
                 sceneIndex, player_pos_float, self.manager.Player.shadow, self.manager.inventoryImage.keys.names, coinNames,  self.manager.inventoryImage.maps.names, self.saveSprites = pickle.load(f)
                 self.manager.sceneIndex[0] = sceneIndex[0]
                 self.manager.sceneIndex[1] = sceneIndex[1]
@@ -878,7 +881,7 @@ class Collectible(Collider):  ####### Collectible #########
   def collected(self):
     if self.type == "map" and not(self.manager.inventoryImage.searchMap()):
        self.manager.dialogueManager.setText("press 'M' to open the map. ('ENTER' to close dialogue)")
-    elif self.type == "coin" and self.manager.inventoryImage.coins.num >= 4:
+    elif self.type == "coin" and len(self.manager.inventoryImage.coins.num) >= 4:
        self.manager.dialogueManager.setText("Congragulations! You have collected all the coins. This is end (at this moment) of the playtest. Thank you for playing!")
     self.image = self.frames[0]
     self.inInventory = True
@@ -1558,8 +1561,13 @@ class Button(Sprite):  ############# button ##################
 
   def __init__(self, image, pos, manager, grid=True, condition=True, *groups):
     self.condition = condition
+    self.mouseHover = False
 
     super().__init__(image, pos, manager, grid, *groups)
+    self.image.fill((255, 255, 255), special_flags=pg.BLEND_RGB_SUB) 
+    if not(self.condition):
+      brighten = 128
+      self.image.fill((brighten, brighten, brighten), special_flags=pg.BLEND_RGB_ADD) 
 
   def isClick(self):
     if self.condition:
@@ -1572,14 +1580,15 @@ class Button(Sprite):  ############# button ##################
     return False
       
   def animate(self):
-    if not(self.condition):
-        pass
-        # grey filter
-    else:
+    if self.condition:
       mouse_pos = pg.mouse.get_pos()
-      if(self.rect.collidepoint(mouse_pos)):
-        pass
-        # white filter
+      brighten = 255
+      if self.rect.collidepoint(mouse_pos) and not(self.mouseHover):
+        self.image.fill((brighten, brighten, brighten), special_flags=pg.BLEND_RGB_ADD) 
+        self.mouseHover = True
+      elif not(self.rect.collidepoint(mouse_pos)) and self.mouseHover:
+        self.image.fill((brighten, brighten, brighten), special_flags=pg.BLEND_RGB_SUB) 
+        self.mouseHover = False
 
 
 class killShadow(Collider):  ########### kill shadow ########

@@ -5,6 +5,7 @@ import sprites as spr
 from shader import Shader, update_shader
 import moderngl
 import os.path
+from pathlib import Path
 
 
 def main(gameManager):  # starting scene
@@ -29,7 +30,7 @@ def main(gameManager):  # starting scene
   all_sprites = pg.sprite.Group()
   all_sprites.add(background, button)
 
-  shader = Shader()
+  shader = Shader(0,0)
   t = 0
 
   run = True
@@ -49,6 +50,7 @@ def main(gameManager):  # starting scene
       run = False
 
     for sprite in all_sprites:
+      sprite.animate()
       sprite.draw(gameManager.screen)
     gameManager.screen.blit(surface, (0, 0))
     pg.draw.rect(surface, (0, 0, 0, transparency),
@@ -57,7 +59,7 @@ def main(gameManager):  # starting scene
     keys = pg.key.get_pressed()
     if gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
       saveName = input("saved under what name? \n>")
-      if os.path.isfile('saveFiles/' + saveName + '.dat'):
+      if os.path.isfile(str(Path.home()) + '/breakSaveFiles/' + saveName + '.dat'):
         gameManager.user = saveName
         gameManager.saveState.load()
         return None
