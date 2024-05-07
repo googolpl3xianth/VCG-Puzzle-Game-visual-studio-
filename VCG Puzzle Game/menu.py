@@ -45,9 +45,10 @@ def main(gameManager):  # starting scene
     if (button[0].isClick()):  # checks if start button is clicked
         run = False
         gameManager.sceneIndex[0] = 1
-    if (button[1].isClick()):  # checks if start button is clicked
-      gameManager.saveState.load()
-      run = False
+    if run:
+      if (button[1].isClick()):  # checks if start button is clicked
+        gameManager.saveState.load()
+        run = False
 
     for sprite in all_sprites:
       sprite.animate()
@@ -57,7 +58,7 @@ def main(gameManager):  # starting scene
                  [0, 0, gameManager.screenWidth, gameManager.screenHeight])
 
     keys = pg.key.get_pressed()
-    if gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
+    if run and gameManager.devMode and keys[pg.K_LCTRL] and keys[pg.K_s]:
       saveName = input("saved under what name? \n>")
       if os.path.isfile(str(Path.home()) + '/breakSaveFiles/' + saveName + '.dat'):
         gameManager.user = saveName

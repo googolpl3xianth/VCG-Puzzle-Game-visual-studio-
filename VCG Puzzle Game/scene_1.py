@@ -12,8 +12,7 @@ def main(gameManager):  # first scene
   cage = spr.Cage((9, 1), gameManager)
   background = spr.Background("sprites/BGs/edge.png", gameManager)
 
-  mentorImage = Image.open("sprites/NPCs/Mentor.png").crop((100, 80, 332, 590)).save("sprites/NPCs/NMentor.png")
-  mentorImage = pg.transform.scale(pg.image.load("sprites/NPCs/NMentor.png").convert_alpha(), (int(gameManager.tileSize[0]), int(gameManager.tileSize[1]) * 2))
+  mentorImage = pg.transform.scale(pg.image.load("sprites/NPCs/Mentor.png").convert_alpha(), (int(gameManager.tileSize[0]), int(gameManager.tileSize[1]) * 2))
   mentor = spr.Sprite(mentorImage, (2, 3.5), gameManager, True)
 
   text_group = (
