@@ -109,15 +109,23 @@ def main(gameManager):  # first scene
   
   ######################### e #######################
   all_sprites = pg.sprite.Group()
-  background = spr.Background("sprites/BGs/blackBG.png", gameManager)
+  background = spr.Background("sprites/BGs/edge.png", gameManager)
   kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth // gameManager.tileSize[0],
+                     6),
+                     gameManager),
+      spr.killShadow((0, 7, gameManager.screenWidth // gameManager.tileSize[0],
+                     5),
+                     gameManager),
+      spr.killShadow((0, 0, 10,
                      gameManager.screenHeight // gameManager.tileSize[1]),
+                     gameManager),
+      spr.killShadow((11, 0, gameManager.screenWidth // gameManager.tileSize[0],
+                     10),
                      gameManager))
   text = (spr.text((10, 6), 20, "As long as there is a physical object, you are anchored to the real world", gameManager))
-  tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
   all_sprites.add(
-      background, kill_shadow, spr.Sprite(tempImage, (10,6), gameManager), gameManager.Player, text
+      background, kill_shadow, gameManager.Player, text
   )
 
   scene_2_e = scn.scene(gameManager, all_sprites)

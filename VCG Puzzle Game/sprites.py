@@ -9,7 +9,7 @@ from pathlib import Path
 pg.init()
 screen = pg.display.set_mode((0,0))
 
-devMode = False
+devMode = True
 
 def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager): ################# spriteSheet #############
     frames = []
@@ -56,6 +56,7 @@ class GameManager:  ########## Game manager #########
     self.door_group = pg.sprite.Group()
     self.guard_group = pg.sprite.Group()
     self.enemy_group = pg.sprite.Group()
+    self.NPC_group = pg.sprite.Group()
     self.collect_group = pg.sprite.Group()
     self.text_group = pg.sprite.Group()
     self.conveyor_group = pg.sprite.Group()
@@ -68,6 +69,7 @@ class GameManager:  ########## Game manager #########
                         self.door_group,
                         self.guard_group,
                         self.enemy_group,
+                        self.NPC_group,
                         self.collect_group,
                         self.text_group,
                         self.conveyor_group,
@@ -83,6 +85,7 @@ class GameManager:  ########## Game manager #########
     self.door_group.empty()
     self.guard_group.empty()
     self.enemy_group.empty()
+    self.NPC_group.empty
     self.collect_group.empty()
     self.text_group.empty()
     self.conveyor_group.empty()
@@ -162,6 +165,12 @@ class GameManager:  ########## Game manager #########
         text.colliding = False
     for text in collided_text:
         text.colliding = True
+
+    collided_NPC = pg.sprite.spritecollide(self.Player, self.NPC_group, False) # player * NPC
+    for NPC in self.NPC_group:
+      NPC.colliding = False
+    for NPC in collided_NPC:
+      NPC.colliding = True
           
     player_wall = pg.sprite.spritecollide(self.Player, self.wall_group, False)
     player_box = pg.sprite.spritecollide(self.Player, self.box_group, False)
@@ -453,11 +462,15 @@ class saveState: ########## saveState ###########
                   self.manager.inventoryImage.coins.num = []
                   Collectible((0,0), "coin", "coin1", self.manager).collected()
                   self.manager.inventoryImage.coins.names.pop()
+                  self.manager.inventoryImage.coins.names = []
                   self.manager.inventoryImage.coins.num = []
                 self.manager.inventoryImage.coins.names = coinNames
-                self.manager.inventoryImage.keys.num = self.manager.inventoryImage.keys.names
-                self.manager.inventoryImage.coins.num = self.manager.inventoryImage.coins.names
-                self.manager.inventoryImage.maps.num = self.manager.inventoryImage.maps.names
+                for name in self.manager.inventoryImage.keys.names:
+                  self.manager.inventoryImage.keys.num.append(name)
+                for name in self.manager.inventoryImage.coins.names:
+                  self.manager.inventoryImage.coins.num.append(name)
+                for name in self.manager.inventoryImage.maps.names:
+                  self.manager.inventoryImage.maps.num.append(name)
             return True           
         else:
            print("no save file")
@@ -672,49 +685,53 @@ class DialogueManager(Sprite): ########## dialogueManager ###########
                     self.boxIndex = 0
        
     def draw(self, screen):
-        if self.show:
-            super().draw(screen)
-            margin = [self.manager.tileSize[0] / 3, self.manager.tileSize[1] / 3]
-            if not(self.speakerName == ""):
-                screen.blit(self.speakerImage, pg.Rect(self.startx, self.starty - self.manager.tileSize[1], 0, 0))
-                screen.blit(self.font.render(self.speakerName, 0, self.textColor), pg.Rect(self.startx + margin[0], self.starty - self.manager.tileSize[1] + margin[1] / 2, 0, 0))
-            x, y = (self.startx + margin[0], self.starty + margin[1])
-            maxX = x
-            posArray = [[]]
-            imageWidth = self.image.get_width() - (2 * margin[0])
-            imageHeight = self.image.get_height() - (2 * margin[1])
-            space = self.font.size(' ')[0]  # The width of a space
-            i = 0
-            for line in self.words:
-                for word in line:
-                    word_surface = self.font.render(word, 0, self.textColor)
-                    word_width, word_height = self.font.size(word)
-                    if x + word_width >= (imageWidth + self.startx):
-                        x = self.startx + margin[0]  # Reset the x.
-                        y += word_height  # Start on new row.
-                        if y >= (imageHeight + self.starty):
-                           i += 1
-                           y = self.starty + margin[1]
-                           posArray.append([])
-                    posArray[i].append((x, y))
-                    x += word_width + space
-                    if x > maxX:
-                        maxX = x
-                x = self.startx + margin[0]  # Reset the x.
-                y += word_height
-                if y >= (imageHeight + self.starty):
-                    i += 1
-                    y = self.starty + margin[1]
-                    posArray.append([])
-            self.boxNum = i
-            j = 0
-            for line in self.words:
-                for word in line:
-                    word_surface = self.font.render(word, 0, self.textColor)
-                    screen.blit(word_surface, (posArray[self.boxIndex][j][0], posArray[self.boxIndex][j][1]))
-                    j += 1
-                    if len(posArray[self.boxIndex]) <= j:
-                       break
+      if self.show:
+        super().draw(screen)
+        margin = [self.manager.tileSize[0] / 3, self.manager.tileSize[1] / 3]
+        if not(self.speakerName == ""):
+            screen.blit(self.speakerImage, pg.Rect(self.startx, self.starty - self.manager.tileSize[1], 0, 0))
+            screen.blit(self.font.render(self.speakerName, 0, self.textColor), pg.Rect(self.startx + margin[0], self.starty - self.manager.tileSize[1] + margin[1] / 2, 0, 0))
+        x, y = (self.startx + margin[0], self.starty + margin[1])
+        maxX = x
+        posArray = [[]]
+        imageWidth = self.image.get_width() - (2 * margin[0])
+        imageHeight = self.image.get_height() - (2 * margin[1])
+        space = self.font.size(' ')[0]  # The width of a space
+        i = 0
+        for line in self.words:
+            for word in line:
+                word_surface = self.font.render(word, 0, self.textColor)
+                word_width, word_height = self.font.size(word)
+                if x + word_width >= (imageWidth + self.startx):
+                    x = self.startx + margin[0]  # Reset the x.
+                    y += word_height  # Start on new row.
+                    if y >= (imageHeight + self.starty):
+                        i += 1
+                        y = self.starty + margin[1]
+                        posArray.append([])
+                posArray[i].append((x, y))
+                x += word_width + space
+                if x > maxX:
+                    maxX = x
+            x = self.startx + margin[0]  # Reset the x.
+            y += word_height
+            if y >= (imageHeight + self.starty):
+                i += 1
+                y = self.starty + margin[1]
+                posArray.append([])
+        self.boxNum = i
+        j = 0
+        for line in self.words:
+            for word in line:
+                word_surface = self.font.render(word, 0, self.textColor)
+                screen.blit(word_surface, (posArray[self.boxIndex][j][0], posArray[self.boxIndex][j][1]))
+                j += 1
+                if len(posArray[self.boxIndex]) <= j:
+                    break
+        font = pg.font.Font('freesansbold.ttf', round(self.manager.tileSize[1] / 4))
+        text = font.render("'ENTER' ->", 0, (225,225,225))
+        screen.blit(text, (self.startx + imageWidth - text.get_width(), self.starty + imageHeight - text.get_height(), 0, 0))
+        
     
 
 class inventoryImage(Sprite): ############### inventoryImage #################
@@ -730,14 +747,19 @@ class inventoryImage(Sprite): ############### inventoryImage #################
       self.maps = Item(pg.transform.scale(pg.image.load("sprites/Maps/map.png").convert_alpha(), (manager.tileSize[0],manager.tileSize[1])))
       self.collectibles.add(self.keys, self.coins, self.maps)
       self.showMap = False
+      self.show = True
 
     def update(self):
-       keys = pg.key.get_pressed()
-       if keys[pg.K_m] and self.searchInv("map" + str(self.manager.sceneIndex[0])):
-          self.showMap = True
-       else:
-          self.showMap = False
-       
+      keys = pg.key.get_pressed()
+      if keys[pg.K_m] and self.searchInv("map" + str(self.manager.sceneIndex[0])):
+        self.showMap = True
+      else:
+        self.showMap = False
+      if self.manager.devMode and keys[pg.K_h]:
+        self.show = False
+      else:
+        self.show = True
+
     def addItem(self, collectible):
         if collectible.type == "key":
             self.keys.addItem(collectible)
@@ -759,82 +781,92 @@ class inventoryImage(Sprite): ############### inventoryImage #################
 
     def removeCollect(self, name):
         for item in self.collectibles:
+            if name in item.num:
+              item.num.remove(name)
             if name in item.names:
-                item.names.remove(name)
-                item.num -= 1
-                return True
+              item.names.remove(name)
+              return True
         return False
-      
+    
     def draw(self, screen):
-      i = 0
-      if self.showMap:
-        #tempSprites = []
-        #tempImages = []
-        #tempRects = []
-        #scale = .2
+      if self.show:
+        i = 0
+        if self.showMap:
+          #tempSprites = []
+          #tempImages = []
+          #tempRects = []
+          #scale = .2
 
-        #for scene_group in self.manager.scenes:
-        #  for scene in scene_group:
-        #    if not(scene.blank):
-        #      for sprite_group in scene.all_sprites:
-        #        if isinstance(sprite_group, list):
-        #          for sprite in sprite_group:
-        #            tempSprites.append(sprite)
-        #            tempImages.append(pg.transform.scale(sprite.image, (round(self.manager.tileSize[0] * scale), round(self.manager.tileSize[1] * scale))))
-        #            tempRect = sprite.rect.copy()
-        #            tempRect.x = round(tempRect.x * scale)
-        #            tempRect.y = round(tempRect.y * scale)
-        #            tempRect.width = round(tempRect.width * scale)
-        #            tempRect.height = round(tempRect.height * scale)
-        #            tempRects.append(tempRect)
-        #        else:
-        #          if sprite_group is not(self.manager.inventoryImage or self.manager.DialogueManager):
-        #            tempSprites.append(sprite_group)
-        #            tempImages.append(pg.transform.scale(sprite_group.image, (round(self.manager.tileSize[0] * scale), round(self.manager.tileSize[1] * scale))))
-        #            tempRect = sprite_group.rect.copy()
-        #            tempRect.x = round(tempRect.x * scale)
-        #            tempRect.y = round(tempRect.y * scale)
-        #            tempRect.width = round(tempRect.width * scale)
-        #            tempRect.height = round(tempRect.height * scale)
-        #            tempRects.append(tempRect)
-        #width = self.manager.screenWidth * scale
-        #height = self.manager.screenHeight * scale
-        #shift = [(self.manager.screenWidth - width) / 2, (self.manager.screenHeight - height) / 2]
-        #mapSurface = pg.Surface((width, height), pg.SRCALPHA)
-        #for rect in tempRects:
-        #   rect[0] += shift[0]
-        #   rect[1] += shift[1]
-        #for i in range(len(tempSprites)):
-        #  tempSprites[i].drawSelf(mapSurface, tempImages[i], tempRects[i])
-        #screen.blit(mapSurface, shift)
-        tempImage = pg.image.load("sprites/Maps/map" + str(self.manager.sceneIndex[0]) + ".png").convert_alpha()
-        original_width, original_height = tempImage.get_size()
-        if original_width / 22 < original_height / 12:
-          new_height = round(self.manager.screenHeight * 3 / 4)
-          new_width = round(original_width * (new_height / original_height))
-        else:
-          new_width = round(self.manager.screenWidth * 3 / 4)
-          new_height = round(original_height * (new_width / original_width))
-        scaled_image = pg.transform.scale(tempImage, (new_width, new_height))
-        tempRect = scaled_image.get_rect()
-        tempRect.center = [self.manager.screenWidth // 2, self.manager.screenHeight // 2]
-        screen.blit(scaled_image, tempRect)
-      for item in self.collectibles:
-        if len(item.num) > 0:
-            itemImage = item.image.copy()
-            alpha = 128
-            itemImage.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
-            screen.blit(itemImage, ((2 * i + .5) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
-            text = self.font.render(str(len(item.num)), 0, (0,0,0))
-            outline = self.font.render(str(len(item.num)), 0, (255,255,255))
-            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
-            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
-            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
-            screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
-            screen.blit(text, ((2 * i + 1.75) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
-            i += 1
-        else:
-            pass
+          #for scene_group in self.manager.scenes:
+          #  for scene in scene_group:
+          #    if not(scene.blank):
+          #      for sprite_group in scene.all_sprites:
+          #        if isinstance(sprite_group, list):
+          #          for sprite in sprite_group:
+          #            tempSprites.append(sprite)
+          #            tempImages.append(pg.transform.scale(sprite.image, (round(self.manager.tileSize[0] * scale), round(self.manager.tileSize[1] * scale))))
+          #            tempRect = sprite.rect.copy()
+          #            tempRect.x = round(tempRect.x * scale)
+          #            tempRect.y = round(tempRect.y * scale)
+          #            tempRect.width = round(tempRect.width * scale)
+          #            tempRect.height = round(tempRect.height * scale)
+          #            tempRects.append(tempRect)
+          #        else:
+          #          if sprite_group is not(self.manager.inventoryImage or self.manager.DialogueManager):
+          #            tempSprites.append(sprite_group)
+          #            tempImages.append(pg.transform.scale(sprite_group.image, (round(self.manager.tileSize[0] * scale), round(self.manager.tileSize[1] * scale))))
+          #            tempRect = sprite_group.rect.copy()
+          #            tempRect.x = round(tempRect.x * scale)
+          #            tempRect.y = round(tempRect.y * scale)
+          #            tempRect.width = round(tempRect.width * scale)
+          #            tempRect.height = round(tempRect.height * scale)
+          #            tempRects.append(tempRect)
+          #width = self.manager.screenWidth * scale
+          #height = self.manager.screenHeight * scale
+          #shift = [(self.manager.screenWidth - width) / 2, (self.manager.screenHeight - height) / 2]
+          #mapSurface = pg.Surface((width, height), pg.SRCALPHA)
+          #for rect in tempRects:
+          #   rect[0] += shift[0]
+          #   rect[1] += shift[1]
+          #for i in range(len(tempSprites)):
+          #  tempSprites[i].drawSelf(mapSurface, tempImages[i], tempRects[i])
+          #screen.blit(mapSurface, shift)
+          if os.path.isfile("sprites/Maps/map" + str(self.manager.sceneIndex[0]) + ".png"):
+            tempImage = pg.image.load("sprites/Maps/map" + str(self.manager.sceneIndex[0]) + ".png").convert_alpha()
+            original_width, original_height = tempImage.get_size()
+            if original_width / 22 < original_height / 12:
+              new_height = round(self.manager.screenHeight * 3 / 4)
+              new_width = round(original_width * (new_height / original_height))
+            else:
+              new_width = round(self.manager.screenWidth * 3 / 4)
+              new_height = round(original_height * (new_width / original_width))
+            scaled_image = pg.transform.scale(tempImage, (new_width, new_height))
+            tempRect = scaled_image.get_rect()
+            tempRect.center = [self.manager.screenWidth // 2, self.manager.screenHeight // 2]
+            screen.blit(scaled_image, tempRect)
+          else:
+            self.manager.dialogueManager.setText("It looks like the map is blank")
+        for item in self.collectibles:
+          if len(item.num) > 0:
+              itemImage = item.image.copy()
+              alpha = 128
+              itemImage.fill((255, 255, 255, alpha), None, pg.BLEND_RGBA_MULT)
+              screen.blit(itemImage, ((2 * i + .5) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
+              text = self.font.render(str(len(item.num)), 0, (0,0,0))
+              outline = self.font.render(str(len(item.num)), 0, (255,255,255))
+              screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
+              screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
+              screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
+              screen.blit(outline, ((2 * i + 1.75) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
+              screen.blit(text, ((2 * i + 1.75) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
+              i += 1
+        text = self.font.render("FL " + str(self.manager.sceneIndex[0]), 0, (0,0,0))
+        outline = self.font.render("FL " + str(self.manager.sceneIndex[0]), 0, (255,255,255))
+        screen.blit(outline, ((19) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
+        screen.blit(outline, ((19) * self.manager.tileSize[0] + outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
+        screen.blit(outline, ((19) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] + outline.get_height() * .02, 0, 0))
+        screen.blit(outline, ((19) * self.manager.tileSize[0] - outline.get_height() * .02, .5 * self.manager.tileSize[1] - outline.get_height() * .02, 0, 0))
+        screen.blit(text, ((19) * self.manager.tileSize[0], .5 * self.manager.tileSize[1], 0, 0))
         
 
 class Item(Sprite): ############ Item #################
@@ -850,6 +882,10 @@ class Item(Sprite): ############ Item #################
         self.num.append(collectible.name)
         self.names.append(collectible.name)
         self.image = collectible.image
+
+    def clear(self):
+      self.num.clear()
+      self.names.clear()
 
 
 class Collectible(Collider):  ####### Collectible #########
@@ -880,9 +916,7 @@ class Collectible(Collider):  ####### Collectible #########
     
   def collected(self):
     if self.type == "map" and not(self.manager.inventoryImage.searchMap()):
-       self.manager.dialogueManager.setText("press 'M' to open the map. ('ENTER' to close dialogue)")
-    elif self.type == "coin" and len(self.manager.inventoryImage.coins.num) >= 4:
-       self.manager.dialogueManager.setText("Congragulations! You have collected all the coins. This is end (at this moment) of the playtest. Thank you for playing!")
+       self.manager.dialogueManager.setText("'those who are lost will find direction'\n\npress 'M' to open the map. ('ENTER' to close dialogue)")
     self.image = self.frames[0]
     self.inInventory = True
     self.manager.inventoryImage.addItem(self)
@@ -964,11 +998,45 @@ class Player(Collider):  ############ player ##############
     self.preShadow = self.shadow
     keys = pg.key.get_pressed()
 
-    if not (keys[pg.K_w]) and not (keys[pg.K_a]) and not (
-        keys[pg.K_s]) and not (keys[pg.K_d]) and not (keys[pg.K_LEFT]) and not (keys[pg.K_RIGHT]) and not (keys[pg.K_UP]) and not (keys[pg.K_DOWN]):
-      self.cooldown = 0
-
-    if self.cooldown <= 0:
+    if self.direction == "N":
+      if keys[pg.K_a] or keys[pg.K_LEFT]:
+        self.direction = "W"
+        self.move(-1, 0)
+        self.cooldown = self.manager.FPS
+      elif keys[pg.K_d] or keys[pg.K_RIGHT]:
+        self.direction = "E"
+        self.move(1, 0)
+        self.cooldown = self.manager.FPS
+      elif keys[pg.K_w] or keys[pg.K_UP]:
+        if self.cooldown <= 0:
+           self.move(0, -1)
+           self.cooldown = self.manager.FPS
+        else:
+          self.cooldown -= self.windup
+      elif keys[pg.K_s] or keys[pg.K_DOWN]:
+        self.direction = "S"
+        self.move(0, 1)
+        self.cooldown = self.manager.FPS
+    if self.direction == "E":
+      if keys[pg.K_a] or keys[pg.K_LEFT]:
+        self.direction = "W"
+        self.move(-1, 0)
+        self.cooldown = self.manager.FPS
+      elif keys[pg.K_d] or keys[pg.K_RIGHT]:
+        if self.cooldown <= 0:
+           self.move(1, 0)
+           self.cooldown = self.manager.FPS
+        else:
+          self.cooldown -= self.windup
+      elif keys[pg.K_w] or keys[pg.K_UP]:
+        self.direction = "N"
+        self.move(0, -1)
+        self.cooldown = self.manager.FPS
+      elif keys[pg.K_s] or keys[pg.K_DOWN]:
+        self.direction = "S"
+        self.move(0, 1)
+        self.cooldown = self.manager.FPS
+    if self.direction == "S":
       if keys[pg.K_a] or keys[pg.K_LEFT]:
         self.direction = "W"
         self.move(-1, 0)
@@ -982,20 +1050,45 @@ class Player(Collider):  ############ player ##############
         self.move(0, -1)
         self.cooldown = self.manager.FPS
       elif keys[pg.K_s] or keys[pg.K_DOWN]:
+        if self.cooldown <= 0:
+           self.move(0, 1)
+           self.cooldown = self.manager.FPS
+        else:
+          self.cooldown -= self.windup
+    if self.direction == "W":
+      if keys[pg.K_a] or keys[pg.K_LEFT]:
+        if self.cooldown <= 0:
+           self.move(-1, 0)
+           self.cooldown = self.manager.FPS
+        else:
+          self.cooldown -= self.windup
+      elif keys[pg.K_d] or keys[pg.K_RIGHT]:
+        self.direction = "E"
+        self.move(1, 0)
+        self.cooldown = self.manager.FPS
+      elif keys[pg.K_w] or keys[pg.K_UP]:
+        self.direction = "N"
+        self.move(0, -1)
+        self.cooldown = self.manager.FPS
+      elif keys[pg.K_s] or keys[pg.K_DOWN]:
         self.direction = "S"
         self.move(0, 1)
         self.cooldown = self.manager.FPS
+    
+    if not (keys[pg.K_w]) and not (keys[pg.K_a]) and not (
+        keys[pg.K_s]) and not (keys[pg.K_d]) and not (keys[pg.K_LEFT]) and not (keys[pg.K_RIGHT]) and not (keys[pg.K_UP]) and not (keys[pg.K_DOWN]):
+      self.cooldown = 0
 
+    if self.cooldown <= 0:
       if self.preX == self.rect.x and self.preY == self.rect.y:
         self.windup = 0
     else:
-      self.cooldown -= self.windup
       self.windup += 1
       if keys[pg.K_LSHIFT]:
-          self.windup = self.manager.FPS / 4
+          self.windup = self.manager.FPS / 2
       else:
-          if self.windup > self.manager.FPS / 7:
-            self.windup = self.manager.FPS / 7
+          if self.windup > self.manager.FPS / 6:
+            self.windup = self.manager.FPS / 6
       
     if keys[pg.K_SPACE]:
       self.shadow = True
@@ -1065,7 +1158,38 @@ class Player(Collider):  ############ player ##############
     if not(self.hide):
         if self.alive:
             screen.blit(self.image, self.rect)
-        
+
+
+class NPC(Collider): ################ NPC #############
+  def __init__(self, image, pos, text, condition, manager, *groups):
+    self.text = text
+    self.condition = condition
+    self.colliding = False
+    self.textIndex = [0,0]
+    self.manager = manager
+    super().__init__(image, pos, manager, False, True, *groups)
+
+  def setDialogue(self, events):
+    if self.colliding:
+      for event in events:
+        self.manager.dialogueManager.setText(self.text[self.textIndex[0]][self.textIndex[1]])
+        if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+          if self.condition:
+            if not(self.manager.inventoryImage.searchInv("map6")):
+              Collectible((0,0), "map", "map6", self.manager).collected()
+              self.manager.inventoryImage.coins.clear()
+            if len(self.text) > self.textIndex[0] + 1:
+              self.textIndex[1] = 0
+              self.textIndex[0] += 1
+            elif len(self.text[self.textIndex[0]]) > self.textIndex[1] + 1:
+              self.textIndex[1] += 1
+          else:
+            if len(self.text[self.textIndex[0]]) > self.textIndex[1] + 1:
+              self.textIndex[1] += 1
+
+  def addSelf(self, manager):
+    manager.NPC_group.add(self)
+
 
 class Cage(Collider): ################## cage ################ 
     def __init__(self, pos, manager, *groups):
@@ -1241,6 +1365,7 @@ class Guard(Collider):  ############ guard ############
                speed,
                manager,
                hor=True,
+               turn=False,
                *groups):
     image = pg.transform.scale(pg.image.load("sprites/Enemies/Guard.png").convert_alpha(), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     
@@ -1252,8 +1377,8 @@ class Guard(Collider):  ############ guard ############
     self.preCover = 0
 
     self.hor = hor
-    self.turn = False
-    self.preTurn = False
+    self.turn = turn
+    self.preTurn = turn
 
     self.preX = (pos[0] + .5) * manager.tileSize[0] - image.get_width() / 2
     self.preY = (pos[1] + .5) * manager.tileSize[1] - image.get_height() / 2
@@ -1276,7 +1401,8 @@ class Guard(Collider):  ############ guard ############
       self.image = pg.transform.scale(pg.transform.rotate(self.image, 90), (manager.tileSize[0] * 4 // 5, manager.tileSize[1] * 4 // 5))
     else:
       self.vision.image = pg.transform.scale(pg.transform.rotate(self.vision.image, 180), (manager.tileSize[0] * 2, manager.tileSize[1] * 3))
-
+    if turn:
+      self.vision.image = pg.transform.rotate(self.vision.image, -180)
     self.preImage = self.vision.image
       
 

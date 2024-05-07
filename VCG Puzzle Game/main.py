@@ -5,6 +5,7 @@ import scene_3
 import scene_4
 import scene_5
 import scene_6
+import scene_7
 import pygame as pg
 import sprites as spr
 import scenes as scn
@@ -26,7 +27,7 @@ shortcut.IconLocation = icon
 shortcut.WindowStyle = 7 # 7 - Minimized, 3 - Maximized, 1 - Normal
 shortcut.save()
 
-scenes = [menu, scene_1, scene_2, scene_3, scene_4, scene_5, scene_6]
+scenes = [menu, scene_1, scene_2, scene_3, scene_4, scene_5, scene_6, scene_7]
 
 FPS = 60
 speed = 3.0
@@ -40,15 +41,15 @@ def main():
   pg.init()
   while True:
     gameManager.clearLevel()
-    #try:
-    scenes[gameManager.sceneIndex[0]].main(gameManager)
-    #except Exception as e:
-    #  template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-    #  message = template.format(type(e).__name__, e.args)
-    #  print(message)
-    #  gameManager.saveState.save()
-    #  pg.quit()
-    #  exit()
+    try:
+      scenes[gameManager.sceneIndex[0]].main(gameManager)
+    except Exception as e:
+      template = "An exception otf type {0} occurred. Arguments:\n{1!r}"
+      message = template.format(type(e).__name__, e.args)
+      print(message)
+      gameManager.saveState.save()
+      pg.quit()
+      exit()
 
 
 def void(gameManager):

@@ -1563,6 +1563,10 @@
    'C:\\Users\\verti\\OneDrive\\Documents\\GitHub\\VCG-Puzzle-Game-visual-studio-\\VCG '
    'Puzzle Game\\scene_6.py',
    'PYMODULE'),
+  ('scene_7',
+   'C:\\Users\\verti\\OneDrive\\Documents\\GitHub\\VCG-Puzzle-Game-visual-studio-\\VCG '
+   'Puzzle Game\\scene_7.py',
+   'PYMODULE'),
   ('scenes',
    'C:\\Users\\verti\\OneDrive\\Documents\\GitHub\\VCG-Puzzle-Game-visual-studio-\\VCG '
    'Puzzle Game\\scenes.py',

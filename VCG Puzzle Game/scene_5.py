@@ -11,28 +11,28 @@ def main(gameManager):  # first scene
   cage = spr.Cage((1, 1), gameManager)
   background = spr.Background("sprites/BGs/edge.png", gameManager)
 
-  wall_group = (spr.Wall((0, 11), False, 22, True, gameManager),
+  wall_group = (spr.Wall((0, 10), False, 22, True, gameManager),
                 spr.Wall((0, 0), False, 22, True, gameManager),
                 spr.Wall((0, 0), True, 8, True, gameManager),
-                spr.Wall((0, 10), True, 2, True, gameManager))
+                spr.Wall((0, 10), True, 1, True, gameManager))
   door_group = (spr.Door((0, 8), "E", (4, [1, 3]), "key4", gameManager))
 
-  all_sprites.add(background, wall_group, gameManager.Player, door_group, cage)
+  kill_shadow = (spr.killShadow((0, 11, 22, 1), gameManager))
+
+  all_sprites.add(background, kill_shadow, wall_group, gameManager.Player, door_group, cage)
 
   scene_5_a = scn.scene(gameManager, all_sprites)
 
   ######################### b #######################
   all_sprites = pg.sprite.Group()
-  wall_group = (spr.Wall((1, 11), False, 21, True, gameManager),
+  wall_group = (spr.Wall((0, 11), False, 22, True, gameManager),
                 spr.Wall((0, 0), False, 22, True, gameManager),
                 spr.Wall((21, 0), True, 8, True, gameManager),
                 spr.Wall((21, 10), True, 2, True, gameManager))
   door_group = (spr.Door((21, 8), "W", (6, [0, 0]), "key5", gameManager))
 
-  brokenWall = (spr.Sprite(pg.transform.scale(pg.image.load("sprites/Walls/brokenWall.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1])), (0, 11), gameManager))
-
   text = [spr.text((10, 6), 16, "The periods of transition are always wrought with struggles", gameManager)]
-  all_sprites.add(background, wall_group, brokenWall, gameManager.Player, text,
+  all_sprites.add(background, wall_group, gameManager.Player, text,
                   door_group)
 
   scene_5_b = scn.scene(gameManager, all_sprites)

@@ -67,9 +67,13 @@ class scene:
             ))
 
         font = pg.font.Font('freesansbold.ttf', int(gameManager.tileSize[1] * 1 / 2))
-        exitText = font.render("save and exit", True, (0, 0, 0))
-        self.exitButton = spr.Button(exitText, (gameManager.screenWidth // 2,
+        saveText = font.render("save and exit", True, (0, 0, 0))
+        self.saveButton = spr.Button(saveText, (gameManager.screenWidth // 2,
                        (gameManager.screenHeight // 2) + gameManager.tileSize[1]), gameManager,
+                       False)
+        exitText = font.render("exit", True, (0, 0, 0))
+        self.exitButton = spr.Button(exitText, (gameManager.screenWidth // 2,
+                       (gameManager.screenHeight // 2) + gameManager.tileSize[1] * 1.75), gameManager,
                        False)
 
         self.all_sprites = pg.sprite.Group()
@@ -109,9 +113,9 @@ class scene:
                     if not(saveSprite[2]):
                       guard.killed()
                     guard.cover = saveSprite[3]
-                    guard.turn = saveSprite[4]
-                    if guard.turn:
+                    if saveSprite[4] and not(guard.turn):
                       guard.vision.image = pg.transform.rotate(guard.vision.image, 180)
+                    guard.turn = saveSprite[4]
                     guard.cooldown = saveSprite[5]
                     guard.updateVision()
                     break
@@ -151,8 +155,8 @@ class scene:
     t = 0
   
     while True:
-      for event in pg.event.get():  # closes window
-
+      events = pg.event.get()
+      for event in events:  # closes window
         if event.type == pg.QUIT:
           self.gameManager.saveState.save()
           pg.quit()
@@ -164,6 +168,8 @@ class scene:
               self.gameManager.Player.alive = False
               restart = True
           self.gameManager.undoManager.update(event)
+      for NPC in self.gameManager.NPC_group:
+        NPC.setDialogue(events)
             
       pg.event.pump()
       if transparency == 0 and not (menu) and returnValue is None and self.gameManager.Player.alive:
@@ -209,8 +215,6 @@ class scene:
           if i > 7:
             i = 0
 
-        
-
       self.screen.blit(self.lowerBound, (0, self.gameManager.screenHeight))
       self.screen.blit(self.upperBound, (self.gameManager.screenWidth, 0))
 
@@ -251,6 +255,9 @@ class scene:
             if keys[pg.K_5]:
               if not(self.gameManager.inventoryImage.searchInv("key5")):
                 spr.Collectible((0,0), "key", "key5", self.gameManager).collected()
+            if keys[pg.K_6]:
+              if not(self.gameManager.inventoryImage.searchInv("key6")):
+                spr.Collectible((0,0), "key", "key6", self.gameManager).collected()
         if self.gameManager.devMode and keys[pg.K_c]:
             if keys[pg.K_1]:
               if not(self.gameManager.inventoryImage.searchInv("coin1")):
@@ -302,14 +309,19 @@ class scene:
                     message = template.format(type(e).__name__, e.args)
                     print(message)
         self.screen.blit(self.surface, (0, 0))
-        pg.draw.rect(self.surface, (0, 0, 0, 100), [
+        pg.draw.rect(self.surface, (255, 255, 255, 100), [
             0, 0, self.gameManager.screenWidth, self.gameManager.screenHeight
         ])
         self.menuText.draw(self.screen)
+        self.saveButton.animate() 
+        self.saveButton.draw(self.screen)
+        if self.saveButton.isClick():
+          self.gameManager.saveState.save()
+          pg.quit()
+          exit()
         self.exitButton.animate() 
         self.exitButton.draw(self.screen)
         if self.exitButton.isClick():
-          self.gameManager.saveState.save()
           pg.quit()
           exit()
 
@@ -394,11 +406,9 @@ def gameLoop(gameManager, scenes, start=[0,0]):
                      gameManager.screenHeight // gameManager.tileSize[1]),
                      gameManager))
 
-  if os.path.isfile("map" + str(gameManager.sceneIndex[0])):
-    map_group = (spr.Collectible((11, 6), "map", "map" + str(gameManager.sceneIndex[0]), gameManager))
-  else:
-    map_group = (spr.text((11, 6), 6, "nothing here yet, come back when the game is complete", gameManager))
-
+  map_group = (spr.Collectible((11, 6), "map", "map" + str(gameManager.sceneIndex[0]), gameManager))
+  if gameManager.sceneIndex[0] == 6:
+    map_group = (spr.Collectible((11, 6), "key", "key6", gameManager))
   all_sprites.add(background, kill_shadow, map_group, gameManager.Player)
   voidEnd = scene(gameManager, all_sprites)
 
@@ -417,16 +427,32 @@ def gameLoop(gameManager, scenes, start=[0,0]):
       if temp is None:
         return None
       try:
-        gameManager.sceneIndex[1][1] += temp[1]
-        gameManager.sceneIndex[1][0] += temp[0]
-        shadowIndex[1] = gameManager.sceneIndex[1][1]
-        shadowIndex[0] = gameManager.sceneIndex[1][0]
-        gameManager.shadow = False
+        if not(sceneParts[gameManager.sceneIndex[1][0] + temp[0]][gameManager.sceneIndex[1][1] + temp[1]].blank):
+          gameManager.sceneIndex[1][1] += temp[1]
+          gameManager.sceneIndex[1][0] += temp[0]
+          shadowIndex[1] = gameManager.sceneIndex[1][1]
+          shadowIndex[0] = gameManager.sceneIndex[1][0]
+          gameManager.shadow = False
+        else:
+          shadowIndex[1] = gameManager.sceneIndex[1][1] + temp[1]
+          shadowIndex[0] = gameManager.sceneIndex[1][0] + temp[0]
+          raise IndexError
       except TypeError:
         if temp == "shadow":
             gameManager.shadow = True
         raise IndexError
     except IndexError:
+      if not(gameManager.sceneIndex[1][0] == -1 and gameManager.sceneIndex[1][1] == -1):
+        try:
+          sceneParts[gameManager.sceneIndex[1][0]][gameManager.sceneIndex[1][1]]
+          tempArray[0] = gameManager.sceneIndex[1][0]
+          tempArray[1] = gameManager.sceneIndex[1][1]
+          if tempArray[0] < 0:
+            tempArray[0] = 0
+          if tempArray[1] < 0:
+            tempArray[1] = 0
+        except IndexError:
+          pass
       gameManager.sceneIndex[1][0] = -1
       gameManager.sceneIndex[1][1] = -1
       if shadowTimer % 7 == 0:
@@ -450,15 +476,16 @@ def gameLoop(gameManager, scenes, start=[0,0]):
           if temp == "shadow":
             try:
               switch = False
-              for shadowRect in sceneParts[shadowIndex[0]][shadowIndex[1]].shadowSpawn:
-                if shadowRect.colliderect(gameManager.Player.rect):
-                  gameManager.Player.shadow = False
-                  gameManager.Player.alive = True
-                  gameManager.sceneIndex[1][0] = shadowIndex[0]
-                  gameManager.sceneIndex[1][1] = shadowIndex[1]
-                  gameManager.shadow = False
-                  switch = True
-                  break
+              if shadowIndex[0] >= 0 and shadowIndex[1] >= 0:
+                for shadowRect in sceneParts[shadowIndex[0]][shadowIndex[1]].shadowSpawn:
+                  if shadowRect.colliderect(gameManager.Player.rect):
+                    gameManager.Player.shadow = False
+                    gameManager.Player.alive = True
+                    gameManager.sceneIndex[1][0] = shadowIndex[0]
+                    gameManager.sceneIndex[1][1] = shadowIndex[1]
+                    gameManager.shadow = False
+                    switch = True
+                    break
               if not(switch):
                 gameManager.shadow = True
                 gameManager.Player.alive = False
