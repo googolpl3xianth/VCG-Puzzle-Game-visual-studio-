@@ -85,7 +85,7 @@ class GameManager:  ########## Game manager #########
     self.door_group.empty()
     self.guard_group.empty()
     self.enemy_group.empty()
-    self.NPC_group.empty
+    self.NPC_group.empty()
     self.collect_group.empty()
     self.text_group.empty()
     self.conveyor_group.empty()
@@ -1085,7 +1085,7 @@ class Player(Collider):  ############ player ##############
     else:
       self.windup += 1
       if keys[pg.K_LSHIFT]:
-          self.windup = self.manager.FPS / 2
+          self.windup = self.manager.FPS / 3
       else:
           if self.windup > self.manager.FPS / 6:
             self.windup = self.manager.FPS / 6
