@@ -73,12 +73,8 @@ def main(gameManager):  # first scene
 
   wall_group = (spr.Wall((20, 0), True, 1, True, gameManager),
                                spr.Wall((20, 1), False, 2, True, gameManager))
-
-
   all_sprites.add(background, wall_group, kill_shadow,
                   gameManager.Player)
-
-  scene_5_left = scn.scene(gameManager, all_sprites)
   
   all_sprites = pg.sprite.Group()
   kill_shadow = (
@@ -102,9 +98,8 @@ def main(gameManager):  # first scene
   cage = spr.Cage((21, 11), gameManager)
   background = spr.Background("sprites/BGs/edge.png", gameManager)
 
-  wall_group = (spr.Wall((21, 1), True, 9, True, gameManager),
+  wall_group = (
                 spr.Wall((0, 0), False, 19, True, gameManager),
-                spr.Wall((21, 0), False, 1, True, gameManager),
                 spr.Wall((0, 0), True, 12, True, gameManager),
                 spr.Wall((20, 10), False, 2, True, gameManager),
                 spr.Wall((18, 9), True, 2, False, gameManager),
@@ -132,7 +127,17 @@ def main(gameManager):  # first scene
                   spr.Switch((17, 6), GSwitchWall_group, gameManager),
                   spr.Switch((1, 9), BSwitchWall_group, gameManager))
   
-  spike_group = (spr.Spike((20, 9), gameManager))
+  spike_group = (spr.Spike((21, 0), gameManager),
+                 spr.Spike((21, 1), gameManager),
+                 spr.Spike((21, 2), gameManager),
+                 spr.Spike((21, 3), gameManager),
+                 spr.Spike((21, 4), gameManager),
+                 spr.Spike((21, 5), gameManager),
+                 spr.Spike((21, 6), gameManager),
+                 spr.Spike((21, 7), gameManager),
+                 spr.Spike((21, 8), gameManager),
+                 spr.Spike((21, 9), gameManager),
+                 spr.Spike((20, 9), gameManager))
   guard_group = (spr.Guard((5, 6), 10, 25, gameManager))
 
   conveyor_group = (spr.Conveyor((19, 9), "E", gameManager),
