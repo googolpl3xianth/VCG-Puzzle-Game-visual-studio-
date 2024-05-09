@@ -8,11 +8,8 @@ def main(gameManager):  # first scene
   pg.display.set_caption('scene_2')
   ##################### a ########################
   all_sprites = pg.sprite.Group()
-  
   cage = spr.Cage((1, 1), gameManager)
-
   background = spr.Background("sprites/BGs/edge.png", gameManager)
-
   wall_group = (spr.Wall((8, 7), False, 4, False, gameManager),
                 spr.Wall((11, 7), True, 5, False, gameManager),
                 spr.Wall((0, 11), False, 11, True, gameManager),
@@ -28,12 +25,10 @@ def main(gameManager):  # first scene
   switch_group = (
       spr.Switch((6, 1), switchWall_group, gameManager),
       spr.Switch((6, 2), switchWall_group, gameManager))
-
   collectible_group = (
       spr.Collectible((9, 9), "key", "key2", gameManager))
   all_sprites.add(background, wall_group, switchWall_group, switch_group,
                   collectible_group, gameManager.Player, door_group, cage)
-
   scene_2_a = scn.scene(gameManager, all_sprites)
 
   ######################### b #######################
@@ -50,10 +45,8 @@ def main(gameManager):  # first scene
                 spr.Wall((21, 10), True, 2, True, gameManager))
   box_group = (spr.Box((7, 10), False, gameManager))
   door_group = (spr.Door((21, 8), "W", (3, [0, 0]), "key2", gameManager))
-
   collectible_group = (
       spr.Collectible((6, 3), "coin", "coin2", gameManager))
-
   gSwitchWall_group = [
       spr.switchWall((6, 1), "green", False, gameManager),
       spr.switchWall((6, 2), "green", True, gameManager)]
@@ -62,11 +55,9 @@ def main(gameManager):  # first scene
   switch_group = (
       spr.Switch((5, 1), gSwitchWall_group, gameManager),
       spr.Switch((5, 3), rSwitchWall_group, gameManager))
-
   all_sprites.add(background, wall_group, gSwitchWall_group, rSwitchWall_group,
                   switch_group, collectible_group, box_group,
                   gameManager.Player, door_group, cage)
-
   scene_2_b = scn.scene(gameManager, all_sprites)
 
   ######################### c #######################
@@ -75,11 +66,9 @@ def main(gameManager):  # first scene
                 spr.Wall((1, 0), False, 10, True, gameManager),
                 spr.Wall((12, 0), False, 10, True, gameManager),
                 spr.Wall((0, 0), True, 13, True, gameManager))
-
   all_sprites.add(
       background, wall_group, gameManager.Player
   )
-
   scene_2_c = scn.scene(gameManager, all_sprites)
 
   ######################### d #######################
@@ -104,7 +93,6 @@ def main(gameManager):  # first scene
       wall_group, conveyor, switchWall_group, switch_group, spike, box_group,
       gameManager.Player, cage
   )
-
   scene_2_d = scn.scene(gameManager, all_sprites)
   
   ######################### e #######################
@@ -127,11 +115,8 @@ def main(gameManager):  # first scene
   all_sprites.add(
       background, kill_shadow, gameManager.Player, text
   )
-
   scene_2_e = scn.scene(gameManager, all_sprites)
-  
   blankScene = scn.scene(gameManager, pg.sprite.Group(), (0, 0), True)
-
   sceneParts = [[scene_2_a, scene_2_c, blankScene], [scene_2_b, scene_2_d, scene_2_e]]
 
   return scn.gameLoop(gameManager, sceneParts, [0, 0])

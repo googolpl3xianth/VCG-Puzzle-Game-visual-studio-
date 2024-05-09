@@ -59,7 +59,6 @@ def void(gameManager):
   all_sprites.add(background, kill_shadow, gameManager.Player)
 
   scene_void = scn.scene(gameManager, all_sprites)
-
   shadowIndex = [0, 0]
 
   while True:

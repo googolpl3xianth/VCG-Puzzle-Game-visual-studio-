@@ -9,7 +9,7 @@ from pathlib import Path
 pg.init()
 screen = pg.display.set_mode((0,0))
 
-devMode = True
+devMode = False
 
 def spriteSheet(image, imageWidth, imageHeight, numFrames, gameManager): ################# spriteSheet #############
     frames = []
@@ -586,7 +586,7 @@ class undoManager: ############ undo manager #############
       if not(len(self.frame) == 0):
         self.sprite_actions.append(self.frame)
         self.frame = []
-      if len(self.sprite_actions) > 100:
+      if len(self.sprite_actions) > 250:
          self.sprite_actions.pop(0)
 
 

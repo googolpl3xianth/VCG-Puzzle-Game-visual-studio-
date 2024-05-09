@@ -290,6 +290,9 @@ class scene:
             if keys[pg.K_5]:
               if not(self.gameManager.inventoryImage.searchInv("map5")):
                 spr.Collectible((0,0), "map", "map5", self.gameManager).collected()
+            if keys[pg.K_6]:
+              if not(self.gameManager.inventoryImage.searchInv("map6")):
+                spr.Collectible((0,0), "map", "map6", self.gameManager).collected()
         if self.gameManager.devMode and keys[pg.K_t]:
             while True:
                 try:

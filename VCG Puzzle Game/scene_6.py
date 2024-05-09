@@ -21,7 +21,7 @@ def main(gameManager):  # first scene
  ##################### b ########################
   all_sprites = pg.sprite.Group()
   background = spr.Background("sprites/BGs/blackBG.png", gameManager)
-  door_group = (spr.Door((21, 7), "W", (7, [0, 0]), "key6", gameManager))
+  door_group = (spr.Door((21, 8), "W", (7, [0, 0]), "key6", gameManager))
   kill_shadow = (
       spr.killShadow((0, 0, gameManager.screenWidth / gameManager.tileSize[0],
                      gameManager.screenHeight / gameManager.tileSize[1]),
@@ -29,9 +29,7 @@ def main(gameManager):  # first scene
   all_sprites.add(background, kill_shadow, door_group, gameManager.Player)
   scene_6_exit = scn.scene(gameManager, all_sprites)
 
-
   blankScene = scn.scene(gameManager, pg.sprite.Group(), (0, 0), True)
-
 
   sceneParts = [[scene_6], [blankScene], [scene_6_exit]]
 

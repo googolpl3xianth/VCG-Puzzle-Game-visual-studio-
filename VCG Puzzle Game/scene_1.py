@@ -11,14 +11,9 @@ def main(gameManager):  # first scene
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((9, 1), gameManager)
   background = spr.Background("sprites/BGs/edge.png", gameManager)
-
-  mentorImage = pg.transform.scale(pg.image.load("sprites/NPCs/Mentor.png").convert_alpha(), (int(gameManager.tileSize[0]), int(gameManager.tileSize[1]) * 2))
-  mentor = spr.Sprite(mentorImage, (2, 3.5), gameManager, True)
-
   text_group = (
       spr.text((3, 3), 4, "Hold 'SPACE' to enter shadow mode", gameManager),
       spr.text((11, 1), 5, "Press 'R' to reset", gameManager))
-
   wall_group = (spr.Wall((6, 0), True, 12, False, gameManager),
                 spr.Wall((11, 2), False, 1, True, gameManager),
                 spr.Wall((12, 4), False, 10, True, gameManager),
@@ -28,21 +23,14 @@ def main(gameManager):  # first scene
                 spr.Wall((0, 0), False, 22, True, gameManager),
                 spr.Wall((0, 0), True, 12, True, gameManager))
   box_group = (spr.Box((11, 4), False, gameManager))
-  
   conveyor = [spr.Conveyor((12, 1), "W", gameManager)]
-
   collectible_group = (
       spr.Collectible((15, 2), "key", "key1", gameManager))
-  
-  
-
-  all_sprites.add(background, wall_group, conveyor, box_group, collectible_group, mentor,
+  all_sprites.add(background, wall_group, conveyor, box_group, collectible_group,
                   gameManager.Player, text_group, cage)
-
   scene_1_a = scn.scene(gameManager, all_sprites)
 
   ######################### b #######################
-
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((1, 1), gameManager)
   wall_group = (spr.Wall((4, 5), True, 6, True, gameManager),
@@ -58,15 +46,12 @@ def main(gameManager):  # first scene
   box_group = (spr.Box((5, 5), True, gameManager),
                spr.Box((6, 5), True, gameManager))
   door_group = (spr.Door((21, 8), "W", (2, [0, 0]), "key1", gameManager))
-  
   enemy_group = (spr.Guard((6, 8), 2, 8, gameManager))
   text_group = (
       spr.text((4, 3), 12, "be careful of the guard", gameManager),
       spr.text((4, 2), 12, "hold SHIFT to sprint", gameManager))
-
   all_sprites.add(background, kill_shadow, wall_group, box_group, gameManager.Player,
                   door_group, enemy_group, text_group, cage)
-
   scene_1_b = scn.scene(gameManager, all_sprites)
 
   ##################### c ########################
@@ -91,7 +76,6 @@ def main(gameManager):  # first scene
                 spr.Wall((21, 0), True, 9, True, gameManager),
                 spr.Wall((18, 9), False, 2, True, gameManager),
                 spr.Wall((16, 8), False, 3, True, gameManager))
-
   spike_group = (
                 spr.Spike((21, 9), gameManager),
                 spr.Spike((21, 10), gameManager),
@@ -113,35 +97,26 @@ def main(gameManager):  # first scene
       spr.Switch((20, 10), bSwitchWall_group, gameManager),
       spr.Switch((20, 11), bSwitchWall_group, gameManager),
       spr.Switch((18, 10), gSwitchWall_group, gameManager))
-
   collectible_group = (
       spr.Collectible((4, 9), "coin", "coin1", gameManager))
-
   conveyor_group = (spr.Conveyor((17, 9), "S", gameManager), 
                     spr.Conveyor((17, 10), "N", gameManager))
-
   all_sprites.add(background, wall_group, conveyor_group, rSwitchWall_group, bSwitchWall_group,
                   gSwitchWall_group, switch_group, collectible_group,
                   spike_group, box_group, gameManager.Player, cage)
-
   scene_1_c = scn.scene(gameManager, all_sprites)
 
   ##################### d ########################
   all_sprites = pg.sprite.Group()
-
   killShadow_group = (
       spr.killShadow((4, 0, 18, gameManager.screenHeight // gameManager.tileSize[1]), gameManager),
       spr.killShadow((0, 5, gameManager.screenWidth // gameManager.tileSize [0], 8), gameManager),
       spr.killShadow((2, 2, 1, 1), gameManager),
       spr.killShadow((2, 4, 3, 1), gameManager),
       spr.killShadow((0, 3, 1, 1), gameManager))
-  
   text_group = (spr.text((2, 1), 12, "turn back or be lost to the void", gameManager))
-
   all_sprites.add(background, killShadow_group, gameManager.Player, text_group)
-
   scene_1_d = scn.scene(gameManager, all_sprites)
-
   sceneParts = [[scene_1_a, scene_1_c], [scene_1_b, scene_1_d]]
 
   return scn.gameLoop(gameManager, sceneParts, gameManager.sceneIndex[1])
