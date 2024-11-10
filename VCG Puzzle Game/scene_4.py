@@ -100,21 +100,32 @@ def main(gameManager):
   ################### scene_4_path ###################
   all_sprites = pg.sprite.Group()
   tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
-  killShadow = spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0],gameManager.screenHeight / gameManager.tileSize[1]), gameManager)
+  killShadow = (spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0], 5), gameManager),
+                spr.killShadow((0,0,2,gameManager.screenHeight / gameManager.tileSize[1]), gameManager),
+                spr.killShadow((0,6,gameManager.screenWidth / gameManager.tileSize[0],6), gameManager),
+                spr.killShadow((3,0,19,gameManager.screenHeight / gameManager.tileSize[1]), gameManager))
   all_sprites.add(killShadow, spr.Sprite(tempImage, (2,5), gameManager), gameManager.Player)
   scene_4_path1 = scn.scene(gameManager, all_sprites)
   all_sprites = pg.sprite.Group()
   tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
-  killShadow = spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0],gameManager.screenHeight / gameManager.tileSize[1]), gameManager)
+  killShadow = (spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0], 9), gameManager),
+                spr.killShadow((0,0,15,gameManager.screenHeight / gameManager.tileSize[1]), gameManager),
+                spr.killShadow((0,10,gameManager.screenWidth / gameManager.tileSize[0],2), gameManager),
+                spr.killShadow((16,0,6,gameManager.screenHeight / gameManager.tileSize[1]), gameManager))
   all_sprites.add(killShadow, spr.Sprite(tempImage, (15,9), gameManager), gameManager.Player)
   scene_4_path2 = scn.scene(gameManager, all_sprites)
   all_sprites = pg.sprite.Group()
   tempImage = pg.transform.scale(pg.image.load("sprites/BGs/edge.png").convert_alpha(), (gameManager.tileSize[0], gameManager.tileSize[1]))
-  killShadow = spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0],gameManager.screenHeight / gameManager.tileSize[1]), gameManager)
+  killShadow = (spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0], 1), gameManager),
+                spr.killShadow((0,0,7,gameManager.screenHeight / gameManager.tileSize[1]), gameManager),
+                spr.killShadow((0,2,gameManager.screenWidth / gameManager.tileSize[0],10), gameManager),
+                spr.killShadow((8,0,14,gameManager.screenHeight / gameManager.tileSize[1]), gameManager))
   all_sprites.add(killShadow, spr.Sprite(tempImage, (7,1), gameManager), gameManager.Player)
   scene_4_path3 = scn.scene(gameManager, all_sprites)
   all_sprites = pg.sprite.Group()
-  killShadow = spr.killShadow((0, 0,gameManager.screenWidth / gameManager.tileSize[0],gameManager.screenHeight / gameManager.tileSize[1]), gameManager)
+  killShadow = (spr.killShadow((0,0,gameManager.screenWidth / gameManager.tileSize[0], 7), gameManager),
+                spr.killShadow((0,0,21,gameManager.screenHeight / gameManager.tileSize[1]), gameManager),
+                spr.killShadow((0,8,gameManager.screenWidth / gameManager.tileSize[0],4), gameManager))
   conveyor = spr.Conveyor((21, 7), "E", gameManager)
   all_sprites.add(killShadow, conveyor, gameManager.Player)
   scene_4_path4 = scn.scene(gameManager, all_sprites)

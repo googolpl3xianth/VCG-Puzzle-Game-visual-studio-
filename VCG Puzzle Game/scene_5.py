@@ -82,7 +82,7 @@ def main(gameManager):  # first scene
   all_sprites = pg.sprite.Group()
   cage = spr.Cage((21, 11), gameManager)
   background = spr.Background("sprites/BGs/edge.png", gameManager)
-  wall_group = (
+  wall_group = (spr.Wall((21, 9), True, 1, True, gameManager),
                 spr.Wall((0, 0), False, 19, True, gameManager),
                 spr.Wall((0, 0), True, 12, True, gameManager),
                 spr.Wall((20, 10), False, 2, True, gameManager),
@@ -117,7 +117,6 @@ def main(gameManager):  # first scene
                  spr.Spike((21, 6), gameManager),
                  spr.Spike((21, 7), gameManager),
                  spr.Spike((21, 8), gameManager),
-                 spr.Spike((21, 9), gameManager),
                  spr.Spike((20, 9), gameManager))
   guard_group = (spr.Guard((5, 6), 10, 25, gameManager))
   conveyor_group = (spr.Conveyor((19, 9), "E", gameManager),
